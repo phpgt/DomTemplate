@@ -215,3 +215,9 @@ Features at a glance
 + Easily modularise CSS by selecting their custom tag names.
 
 [dom]: https://www.php.gt/dom
+
+### Proudly sponsored by
+
+[JetBrains Open Source sponsorship program](https://www.jetbrains.com/community/opensource/)
+
+[![JetBrains logo.](https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg)](https://www.jetbrains.com/community/opensource/)
