@@ -171,6 +171,31 @@ class ListBinderTest extends TestCase {
 		}
 	}
 
+	public function testBindListData_associativeScalar_withReservedListKey():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_LIST_ASSOCIATIVE_SCALAR_WITH_KEY_BIND);
+		$listData = [
+			"key1" => "value1",
+			"key2" => "value2",
+			"key3" => "value3",
+		];
+		$sut = new ListBinder();
+		$sut->setDependencies(...$this->listBinderDependencies($document));
+		$sut->bindListData($listData, $document);
+
+		$listKeyElementList = $document->querySelectorAll("span.list-key");
+		$listValueElementList = $document->querySelectorAll("span.list-value");
+
+		self::assertCount(count($listData), $listKeyElementList);
+		self::assertCount(count($listData), $listValueElementList);
+
+		$i = 0;
+		foreach($listData as $key => $value) {
+			self::assertSame($key, $listKeyElementList[$i]->textContent);
+			self::assertSame($value, $listValueElementList[$i]->textContent);
+			$i++;
+		}
+	}
+
 	/**
 	 * This tests what happens when the context element has more than one
 	 * element with a data-list attribute. In this test, we expect the
@@ -600,7 +625,7 @@ class ListBinderTest extends TestCase {
 		$sut->bindListData($listData, $document);
 
 		foreach($document->querySelectorAll("li") as $i => $li) {
-			self::assertSame($listData[$i]->format(DateTimeInterface::RFC7231), $li->textContent);
+			self::assertSame($listData[$i]->format(DateTimeInterface::RSS), $li->textContent);
 		}
 	}
 

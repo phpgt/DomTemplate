@@ -7,7 +7,7 @@ use Throwable;
 
 class ComponentExpander extends PartialContentExpander {
 	/** @return Element[] */
-	public function expand(Element $context = null):array {
+	public function expand(?Element $context = null):array {
 		$expandedComponentArray = [];
 
 		if(is_null($context)) {

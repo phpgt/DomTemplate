@@ -238,7 +238,7 @@ class HTMLAttributeBinder {
 			$element->value = $bindValue;
 			break;
 
-		case "list";
+		case "list":
 			$this->listBinder->bindListData($bindValue, $element);
 			break;
 
