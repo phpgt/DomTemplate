@@ -9,7 +9,7 @@ Directly manipulating the DOM in your code can lead to tightly coupling the logi
 <a href="https://github.com/PhpGt/DomTemplate/actions" target="_blank">
 	<img src="https://badge.status.php.gt/domtemplate-build.svg" alt="Build status" />
 </a>
-<a href="https://scrutinizer-ci.com/g/PhpGt/DomTemplate" target="_blank">
+<a href="https://app.codacy.com/gh/PhpGt/DomTemplate" target="_blank">
 	<img src="https://badge.status.php.gt/domtemplate-quality.svg" alt="Code quality" />
 </a>
 <a href="https://scrutinizer-ci.com/g/PhpGt/DomTemplate" target="_blank">
