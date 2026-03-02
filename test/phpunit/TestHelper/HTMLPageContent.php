@@ -303,6 +303,16 @@ HTML;
 </ul>
 HTML;
 
+	const HTML_LIST_ASSOCIATIVE_SCALAR_WITH_KEY_BIND = <<<HTML
+<!doctype html>
+<ul>
+	<li data-list>
+		<span class="list-key" data-bind:text="{{}}">Missing key</span>
+		<span class="list-value" data-bind:text>Missing value</span>
+	</li>
+</ul>
+HTML;
+
 	const HTML_TWO_LISTS = <<<HTML
 <!doctype html>
 <div id="favourites">

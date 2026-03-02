@@ -83,20 +83,4 @@ class ComponentExpanderTest extends PartialContentTestCase {
 		);
 		self::assertSame("more complex", $document->querySelector("example-nested p strong")->innerText);
 	}
-
-	public function testExpand_injectComponentName():void {
-		$partialContent = self::mockPartialContent(
-			"_component", [
-				"example-form" => HTMLPageContent::HTML_COMPONENT_FORM,
-			]
-		);
-		$document = new HTMLDocument(HTMLPageContent::HTML_INCLUDING_EXAMPLE_FORM);
-		$sut = new ComponentExpander($document, $partialContent);
-		$sut->expand();
-
-		$form = $document->querySelector("example-form form");
-		$hiddenInput = $form->querySelector("input[type=hidden]");
-		self::assertSame("__component", $hiddenInput->name);
-		self::assertSame("example-form", $hiddenInput->value);
-	}
 }

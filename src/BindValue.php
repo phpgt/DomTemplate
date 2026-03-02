@@ -13,7 +13,7 @@ class BindValue implements Stringable {
 		$value = $this->rawValue ?? "";
 
 		if($value instanceof DateTimeInterface) {
-			$value = $value->format(DateTimeInterface::RFC7231);
+			$value = $value->format(DateTimeInterface::RSS);
 		}
 
 		return $value;

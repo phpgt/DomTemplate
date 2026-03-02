@@ -9,6 +9,8 @@ use IteratorAggregate;
 use Stringable;
 
 class ListBinder {
+	public const LIST_KEY_BIND_KEY = "{{}}";
+
 	private ElementBinder $elementBinder;
 	private ListElementCollection $listElementCollection;
 	private BindableCache $bindableCache;
@@ -69,6 +71,7 @@ class ListBinder {
 		foreach($listData as $listKey => $listValue) {
 			$i++;
 			$t = $listItem->insertListItem();
+			$elementBinder->bind(self::LIST_KEY_BIND_KEY, $listKey, $t);
 
 // If the $listValue's first value is iterable, then treat this as a nested list.
 			if($this->isNested($listValue)) {

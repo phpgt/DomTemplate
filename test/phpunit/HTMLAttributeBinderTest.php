@@ -125,7 +125,7 @@ class HTMLAttributeBinderTest extends TestCase {
 		$outputElement = $document->querySelector("output");
 		$sut = new HTMLAttributeBinder();
 		$sut->bind(null, $dateTime, $outputElement);
-		self::assertSame("Tue, 05 Apr 1988 17:23:00 GMT", $outputElement->textContent);
+		self::assertSame("Tue, 05 Apr 1988 17:23:00 +0000", $outputElement->textContent);
 	}
 
 	public function testBind_multipleAttributes():void {
