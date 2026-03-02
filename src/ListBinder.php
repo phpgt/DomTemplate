@@ -71,62 +71,67 @@ class ListBinder {
 		foreach($listData as $listKey => $listValue) {
 			$i++;
 			$t = $listItem->insertListItem();
-			$elementBinder->bind(self::LIST_KEY_BIND_KEY, $listKey, $t);
+			try {
+				$elementBinder->bind(self::LIST_KEY_BIND_KEY, $listKey, $t);
 
 // If the $listValue's first value is iterable, then treat this as a nested list.
-			if($this->isNested($listValue)) {
-				$elementBinder->bind(null, $listKey, $t);
-				$this->bindListData(
-					$listValue,
-					$t,
-				);
-				foreach($this->bindableCache->convertToKvp($listValue) as $key => $value) {
-					$elementBinder->bind($key, $value, $t);
+				if($this->isNested($listValue)) {
+					$elementBinder->bind(null, $listKey, $t);
+					$this->bindListData(
+						$listValue,
+						$t,
+					);
+					foreach($this->bindableCache->convertToKvp($listValue) as $key => $value) {
+						$elementBinder->bind($key, $value, $t);
+					}
+					continue;
 				}
-				continue;
-			}
 
-			if(is_object($listValue) && method_exists($listValue, "asArray")) {
-				$listValue = $listValue->asArray();
-			}
-			elseif(is_object($listValue) && !is_iterable($listValue)) {
-				if($this->bindableCache->isBindable($listValue)) {
-					$listValue = $this->bindableCache->convertToKvp($listValue);
+				if(is_object($listValue) && method_exists($listValue, "asArray")) {
+					$listValue = $listValue->asArray();
 				}
-			}
-
-			if($callback) {
-				$listValue = call_user_func(
-					$callback,
-					$t,
-					$listValue,
-					$listKey,
-				);
-			}
-
-			if(is_null($listValue)) {
-				continue;
-			}
-
-			if($this->isKVP($listValue)) {
-				$elementBinder->bind(null, $listKey, $t);
-
-				foreach($listValue as $key => $value) {
-					$elementBinder->bind($key, $value, $t);
-
-					if($this->isNested($value)) {
-						$elementBinder->bind(null, $key, $t);
-						$nestedCount += $this->bindListData(
-							$value,
-							$t,
-							$listItemName,
-							recursiveCall: true,
-						);
+				elseif(is_object($listValue) && !is_iterable($listValue)) {
+					if($this->bindableCache->isBindable($listValue)) {
+						$listValue = $this->bindableCache->convertToKvp($listValue);
 					}
 				}
+
+				if($callback) {
+					$listValue = call_user_func(
+						$callback,
+						$t,
+						$listValue,
+						$listKey,
+					);
+				}
+
+				if(is_null($listValue)) {
+					continue;
+				}
+
+				if($this->isKVP($listValue)) {
+					$elementBinder->bind(null, $listKey, $t);
+
+					foreach($listValue as $key => $value) {
+						$elementBinder->bind($key, $value, $t);
+
+						if($this->isNested($value)) {
+							$elementBinder->bind(null, $key, $t);
+							$nestedCount += $this->bindListData(
+								$value,
+								$t,
+								$listItemName,
+								recursiveCall: true,
+							);
+						}
+					}
+				}
+				else {
+					$elementBinder->bind(null, $listValue, $t);
+				}
 			}
-			else {
-				$elementBinder->bind(null, $listValue, $t);
+			finally {
+				$listItem->finalizeListItem($t);
 			}
 		}
 
