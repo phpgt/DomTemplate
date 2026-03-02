@@ -161,7 +161,6 @@ class DocumentBinder extends Binder {
 	public function cleanupDocument():void {
 		/**
 		 * @var Attr[] $xpathResult
-		 * @phpstan-ignore varTag.nativeType
 		 */
 		$xpathResult = $this->document->evaluate(
 			"//*/@*[starts-with(name(), 'data-bind')] | //*/@*[starts-with(name(), 'data-list')] | //*/@*[starts-with(name(), 'data-template')] | //*/@*[starts-with(name(), 'data-table-key')] | //*/@*[starts-with(name(), 'data-element')]"
