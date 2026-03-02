@@ -109,7 +109,8 @@ jobs:
         with:
           php_version: ${{ matrix.php }}
           path: src/
-          configuration: phpstan.neon
+          level: 6
+          memory_limit: 256M
 
 #  phpmd:
 #    runs-on: ubuntu-latest
