@@ -8,10 +8,14 @@ use Throwable;
 
 class ListElement {
 	const ATTRIBUTE_LIST_PARENT = "data-list-parent";
+	const ATTRIBUTE_LIST_KEEP_TEMPLATE = "data-list-keep-template";
+	private const ATTRIBUTE_LIST_PROXY = "data-list-proxy";
 
 	private string $listItemParentPath;
 	private null|Element $listItemNextSibling;
 	private int $insertCount;
+	/** @var array<int, array{template:Element, keepTemplate:bool}> */
+	private array $templateProxyMap;
 
 	public function __construct(
 		private readonly Node|Element $originalElement
@@ -36,6 +40,7 @@ class ListElement {
 			: $siblingContext;
 
 		$this->insertCount = 0;
+		$this->templateProxyMap = [];
 	}
 
 	public function removeOriginalElement():void {
@@ -73,14 +78,55 @@ class ListElement {
 	 * clone.
 	 */
 	public function insertListItem():Element {
-		$clone = $this->getClone();
 		$listItemParent = $this->getListItemParent();
-		$listItemParent->insertBefore(
-			$clone,
-			$this->getListItemNextSibling()
-		);
+		$nextSibling = $this->getListItemNextSibling();
+		$clone = $this->getClone();
+
+		if(strtolower($clone->tagName) === "template") {
+			$keepTemplate = $clone->hasAttribute(self::ATTRIBUTE_LIST_KEEP_TEMPLATE);
+			$proxy = $clone->ownerDocument->createElement("div");
+			$proxy->setAttribute(self::ATTRIBUTE_LIST_PROXY, "");
+			$proxy->innerHTML = $clone->innerHTML;
+			$listItemParent->insertBefore($proxy, $nextSibling);
+			$this->templateProxyMap[spl_object_id($proxy)] = [
+				"template" => $clone,
+				"keepTemplate" => $keepTemplate,
+			];
+			$this->insertCount++;
+			return $proxy;
+		}
+
+		$listItemParent->insertBefore($clone, $nextSibling);
 		$this->insertCount++;
 		return $clone;
+	}
+
+	public function finalizeListItem(Element $inserted):void {
+		$insertedId = spl_object_id($inserted);
+		if(!isset($this->templateProxyMap[$insertedId])) {
+			return;
+		}
+
+		$templateInfo = $this->templateProxyMap[$insertedId];
+		unset($this->templateProxyMap[$insertedId]);
+
+		$template = $templateInfo["template"];
+		$parent = $inserted->parentElement;
+		if(!$parent) {
+			return;
+		}
+
+		if($templateInfo["keepTemplate"]) {
+			$template->innerHTML = $inserted->innerHTML;
+			$parent->insertBefore($template, $inserted);
+			$inserted->remove();
+			return;
+		}
+
+		while($inserted->childNodes->length) {
+			$parent->insertBefore($inserted->childNodes[0], $inserted);
+		}
+		$inserted->remove();
 	}
 
 	public function getListItemParent():Node|Element {

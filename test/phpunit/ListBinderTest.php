@@ -196,6 +196,56 @@ class ListBinderTest extends TestCase {
 		}
 	}
 
+	public function testBindListData_templateList_unwrapTemplateElements():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_TEMPLATE_LIST_DD_DT);
+		$listData = [
+			"key1" => "value1",
+			"key2" => "value2",
+			"key3" => "value3",
+		];
+		$sut = new ListBinder();
+		$sut->setDependencies(...$this->listBinderDependencies($document));
+		$sut->bindListData($listData, $document);
+
+		$templateList = $document->querySelectorAll("dl > template");
+		$listKeyElementList = $document->querySelectorAll("dl > dt.list-key");
+		$listValueElementList = $document->querySelectorAll("dl > dd.list-value");
+
+		self::assertCount(0, $templateList);
+		self::assertCount(count($listData), $listKeyElementList);
+		self::assertCount(count($listData), $listValueElementList);
+
+		$i = 0;
+		foreach($listData as $key => $value) {
+			self::assertSame($key, $listKeyElementList[$i]->textContent);
+			self::assertSame($value, $listValueElementList[$i]->textContent);
+			$i++;
+		}
+	}
+
+	public function testBindListData_templateList_keepTemplateElements():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_TEMPLATE_LIST_DD_DT_KEEP_TEMPLATE);
+		$listData = [
+			"key1" => "value1",
+			"key2" => "value2",
+			"key3" => "value3",
+		];
+		$sut = new ListBinder();
+		$sut->setDependencies(...$this->listBinderDependencies($document));
+		$sut->bindListData($listData, $document);
+
+		$templateList = $document->querySelectorAll("dl > template");
+		self::assertCount(count($listData), $templateList);
+
+		$i = 0;
+		foreach($listData as $key => $value) {
+			$templateInnerHTML = $templateList[$i]->innerHTML;
+			self::assertStringContainsString(">$key</dt>", $templateInnerHTML);
+			self::assertStringContainsString(">$value</dd>", $templateInnerHTML);
+			$i++;
+		}
+	}
+
 	/**
 	 * This tests what happens when the context element has more than one
 	 * element with a data-list attribute. In this test, we expect the
