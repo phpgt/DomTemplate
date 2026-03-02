@@ -313,6 +313,26 @@ HTML;
 </ul>
 HTML;
 
+	const HTML_TEMPLATE_LIST_DD_DT = <<<HTML
+<!doctype html>
+<dl>
+	<template data-list>
+		<dt class="list-key" data-bind:text="{{}}">Missing key</dt>
+		<dd class="list-value" data-bind:text>Missing value</dd>
+	</template>
+</dl>
+HTML;
+
+	const HTML_TEMPLATE_LIST_DD_DT_KEEP_TEMPLATE = <<<HTML
+<!doctype html>
+<dl>
+	<template data-list data-list-keep-template>
+		<dt class="list-key" data-bind:text="{{}}">Missing key</dt>
+		<dd class="list-value" data-bind:text>Missing value</dd>
+	</template>
+</dl>
+HTML;
+
 	const HTML_TWO_LISTS = <<<HTML
 <!doctype html>
 <div id="favourites">
