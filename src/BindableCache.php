@@ -11,6 +11,7 @@ use ReflectionObject;
 use ReflectionProperty;
 use stdClass;
 use Stringable;
+use Throwable;
 
 class BindableCache {
 	/**
@@ -289,7 +290,7 @@ class BindableCache {
 			try {
 				return $object->$propertyName;
 			}
-			catch(Error) {
+			catch(Throwable) {
 				return null;
 			}
 		}
