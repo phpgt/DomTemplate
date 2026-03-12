@@ -8,7 +8,9 @@ class PartialContent {
 		private readonly string $dirPath
 	) {
 		if(!is_dir($this->dirPath)) {
-			throw new PartialContentDirectoryNotFoundException("The partial content path does not exist: $this->dirPath");
+			throw new PartialContentDirectoryNotFoundException(
+				"The partial content path does not exist: $this->dirPath"
+			);
 		}
 	}
 
@@ -22,7 +24,9 @@ class PartialContent {
 		}
 		$filePath = $this->dirPath . "/" . $name . ".$extension";
 		if(!is_file($filePath)) {
-			throw new PartialContentFileNotFoundException("The partial content file does not exist: $filePath");
+			throw new PartialContentFileNotFoundException(
+				"The partial content file does not exist: $filePath"
+			);
 		}
 
 		return file_get_contents($filePath);

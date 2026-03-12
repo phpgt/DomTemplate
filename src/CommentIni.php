@@ -24,39 +24,7 @@ class CommentIni {
 			NodeFilter::SHOW_COMMENT
 		);
 
-		$ini = null;
-		$commentNodeToRemove = null;
-
-		/** @var Element|Comment $commentNode */
-		foreach($walker as $commentNode) {
-			if(!$commentNode instanceof Comment) {
-				continue;
-			}
-
-			$data = trim($commentNode->data);
-
-			try {
-// We know that sometimes this data will not be correct ini format, and it might actually be a textual comment.
-// Therefore, we must suppress the warning that is emitted by parse_ini_string:
-				$ini = @parse_ini_string($data, true);
-				$commentNodeToRemove = $commentNode;
-			}
-			catch(Throwable) {
-				$ini = null;
-			}
-			if(!$ini) {
-				break;
-			}
-
-// At this point, the ini has successfully parsed.
-			$context = $commentNode;
-			while($context = $context->previousSibling) {
-				if(trim($context->textContent ?? "") !== "") {
-					throw new CommentIniInvalidDocumentLocationException("A Comment INI must only appear as the first node of the HTML.");
-				}
-			}
-		}
-
+		[$commentNodeToRemove, $ini] = $this->findIniComment($walker);
 		$commentNodeToRemove?->parentNode->removeChild($commentNodeToRemove);
 		$this->iniData = $ini ?: null;
 	}
@@ -79,5 +47,63 @@ class CommentIni {
 
 	public function containsIniData():bool {
 		return !empty($this->iniData);
+	}
+
+	/**
+	 * @param iterable<int, Element|Comment> $walker
+	 * @return array{0:?Comment,1:?array<string, array<string, string>|string>}
+	 */
+	private function findIniComment(iterable $walker):array {
+		$commentNodeToRemove = null;
+		$ini = null;
+
+		/** @var Element|Comment $commentNode */
+		foreach($walker as $commentNode) {
+			if(!$commentNode instanceof Comment) {
+				continue;
+			}
+
+			$ini = $this->parseCommentIni(trim($commentNode->data));
+			if(!$ini) {
+				break;
+			}
+
+			$this->assertCommentIsLeadingNode($commentNode);
+			$commentNodeToRemove = $commentNode;
+		}
+
+		return [$commentNodeToRemove, $ini];
+	}
+
+	/** @return ?array<string, array<string, string>|string> */
+	private function parseCommentIni(string $data):?array {
+		set_error_handler(
+			static fn() => true
+		);
+
+		try {
+			$parsed = parse_ini_string($data, true);
+		}
+		catch(Throwable) {
+			$parsed = false;
+		}
+		finally {
+			restore_error_handler();
+		}
+
+		return is_array($parsed)
+			? $parsed
+			: null;
+	}
+
+	private function assertCommentIsLeadingNode(Comment $commentNode):void {
+		$context = $commentNode;
+		while($context = $context->previousSibling) {
+			if(trim($context->textContent ?? "") !== "") {
+				throw new CommentIniInvalidDocumentLocationException(
+					"A Comment INI must only appear as the first node of the HTML."
+				);
+			}
+		}
 	}
 }

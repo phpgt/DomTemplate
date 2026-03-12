@@ -77,7 +77,10 @@ class DocumentBinder extends Binder {
 		}
 
 		if($this->isIndexedArray($kvp)) {
-			throw new IncompatibleBindDataException("bindData is only compatible with key-value-pair data, but it was passed an indexed array.");
+			throw new IncompatibleBindDataException(
+				"bindData is only compatible with key-value-pair data, "
+				. "but it was passed an indexed array."
+			);
 		}
 
 		if(is_object($kvp) && method_exists($kvp, "asArray")) {
@@ -160,7 +163,11 @@ class DocumentBinder extends Binder {
 
 	public function cleanupDocument():void {
 		$xpathResult = $this->document->evaluate(
-			"//*/@*[starts-with(name(), 'data-bind')] | //*/@*[starts-with(name(), 'data-list')] | //*/@*[starts-with(name(), 'data-template')] | //*/@*[starts-with(name(), 'data-table-key')] | //*/@*[starts-with(name(), 'data-element')]"
+			"//*/@*[starts-with(name(), 'data-bind')]"
+			. " | //*/@*[starts-with(name(), 'data-list')]"
+			. " | //*/@*[starts-with(name(), 'data-template')]"
+			. " | //*/@*[starts-with(name(), 'data-table-key')]"
+			. " | //*/@*[starts-with(name(), 'data-element')]"
 		);
 
 		$elementsToRemove = [];

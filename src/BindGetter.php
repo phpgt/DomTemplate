@@ -4,6 +4,6 @@ namespace Gt\DomTemplate;
 use Attribute;
 
 #[Attribute]
-class BindGetter{
+class BindGetter {
 	public function __construct() {}
 }
