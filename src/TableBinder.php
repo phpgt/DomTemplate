@@ -7,10 +7,6 @@ use Gt\Dom\ElementType;
 use Traversable;
 
 class TableBinder {
-	/**
-	 * @noinspection PhpPropertyOnlyWrittenInspection
-	 * @phpstan-ignore-next-line
-	 */
 	private ListBinder $listBinder;
 	private ListElementCollection $templateCollection;
 	private ElementBinder $elementBinder;
@@ -45,12 +41,12 @@ class TableBinder {
 		?string $bindKey = null
 	):void {
 		$tableData = $this->normaliseTableData($tableData);
+		$this->initBinders($context);
 
 		if($context instanceof Document) {
 			$context = $context->documentElement;
 		}
 
-		$this->initBinders();
 		$tableArray = $this->findMatchingTables($context, $bindKey);
 		if(empty($tableArray)) {
 			throw new TableElementNotFoundInContextException();
@@ -493,7 +489,11 @@ class TableBinder {
 		];
 	}
 
-	private function initBinders():void {
+	private function initBinders(Document|Element $context):void {
+		$document = $context instanceof Document
+			? $context
+			: $context->ownerDocument;
+
 		if(!isset($this->htmlAttributeBinder)) {
 			$this->htmlAttributeBinder = new HTMLAttributeBinder();
 		}
@@ -506,5 +506,24 @@ class TableBinder {
 		if(!isset($this->elementBinder)) {
 			$this->elementBinder = new ElementBinder();
 		}
+		if(!isset($this->templateCollection)) {
+			$this->templateCollection = new ListElementCollection($document);
+		}
+		if(!isset($this->listBinder)) {
+			$this->listBinder = new ListBinder();
+		}
+
+		$this->htmlAttributeBinder->setDependencies($this->listBinder, $this);
+		$this->elementBinder->setDependencies(
+			$this->htmlAttributeBinder,
+			$this->htmlAttributeCollection,
+			$this->placeholderBinder,
+		);
+		$this->listBinder->setDependencies(
+			$this->elementBinder,
+			$this->templateCollection,
+			new BindableCache(),
+			$this,
+		);
 	}
 }

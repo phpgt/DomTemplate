@@ -511,6 +511,23 @@ class DocumentBinderTest extends TestCase {
 		}
 	}
 
+	public function testBindTable_stringContext():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_TABLES);
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+
+		$tableData = [
+			["Name", "Position"],
+			["Alan Statham", "Head of Radiology"],
+			["Sue White", "Staff Liason Officer"],
+		];
+
+		$sut->bindTable($tableData, "#tbl1", "tableData");
+		$table = $document->getElementById("tbl1");
+		self::assertSame("Alan Statham", $table->rows[1]->cells[0]->textContent);
+		self::assertSame("Staff Liason Officer", $table->rows[2]->cells[1]->textContent);
+	}
+
 	public function testBindTable_withNullData():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_TABLES);
 		$sut = new DocumentBinder($document);

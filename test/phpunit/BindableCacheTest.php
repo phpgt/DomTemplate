@@ -213,4 +213,65 @@ class BindableCacheTest extends TestCase {
 			self::assertNull($kvpList[$i]["address.country.name"]);
 		}
 	}
+
+	public function testReadNestedObjectValue_privatePropertyReturnsNull():void {
+		$sut = new BindableCache();
+		$address = new Address(
+			"123 Example Street",
+			"Apt 4",
+			"Example City",
+			"AB1 2CD",
+			new \Gt\DomTemplate\Test\TestHelper\Model\Country("GB"),
+		);
+		$object = new class($address) {
+			public function __construct(private readonly Address $address) {}
+		};
+
+		self::assertNull(
+			$this->invokeBindableCacheMethod($sut, "readNestedObjectValue", $object, "address"),
+		);
+	}
+
+	public function testReadNestedObjectValue_uninitializedTypedPropertyReturnsNull():void {
+		$sut = new BindableCache();
+		$object = new class {
+			public Address $address;
+		};
+
+		self::assertNull(
+			$this->invokeBindableCacheMethod($sut, "readNestedObjectValue", $object, "address"),
+		);
+	}
+
+	public function testReadNestedObjectValue_missingPropertyReturnsNull():void {
+		$sut = new BindableCache();
+		$object = new class {};
+
+		self::assertNull(
+			$this->invokeBindableCacheMethod($sut, "readNestedObjectValue", $object, "address"),
+		);
+	}
+
+	public function testNullableStringOrIterable_missingMemberReturnsNull():void {
+		$sut = new BindableCache();
+		$object = new class {};
+
+		self::assertNull(
+			$this->invokeBindableCacheMethod($sut, "nullableStringOrIterable", $object, "missing"),
+		);
+	}
+
+	private function invokeBindableCacheMethod(
+		BindableCache $sut,
+		string $methodName,
+		object $object,
+		string $propertyName,
+	):mixed {
+		$invokeMethod = \Closure::bind(
+			fn(object $target, string $member):mixed => $this->$methodName($target, $member),
+			$sut,
+			BindableCache::class,
+		);
+		return $invokeMethod($object, $propertyName);
+	}
 }

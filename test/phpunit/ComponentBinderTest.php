@@ -213,4 +213,26 @@ class ComponentBinderTest extends TestCase {
 		$sut->bindValue("2", "#subcomponent-2");
 		$sut->bindValue("3");
 	}
+
+	public function testBindValue_callable():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_TODO_CUSTOM_ELEMENT_ALREADY_EXPANDED);
+		$componentElement = $document->querySelector("todo-list");
+		$elementBinder = self::createMock(ElementBinder::class);
+		$elementBinder->expects(self::once())
+			->method("bind")
+			->with(null, "computed value", $componentElement);
+
+		$sut = new ComponentBinder($document);
+		$sut->setDependencies(
+			$elementBinder,
+			self::createStub(PlaceholderBinder::class),
+			self::createStub(TableBinder::class),
+			self::createStub(ListBinder::class),
+			self::createStub(ListElementCollection::class),
+			self::createStub(BindableCache::class),
+		);
+		$sut->setComponentBinderDependencies($componentElement);
+
+		$sut->bindValue(fn():string => "computed value");
+	}
 }
