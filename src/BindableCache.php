@@ -196,9 +196,9 @@ class BindableCache {
 	}
 
 	/**
-	 * @param array<string, Closure> $cache
+	 * @param array<string, callable> $cache
 	 * @param array<string, class-string> $objectKeys
-	 * @return array<string, Closure>
+	 * @return array<string, callable>
 	 */
 	private function expandObjects(
 		array $cache,
@@ -210,24 +210,42 @@ class BindableCache {
 		}
 
 		foreach(array_keys($cache) as $key) {
-			if($objectType = $objectKeys[$key] ?? null) {
-				if($objectType === $className) {
-					continue;
-				}
-
-				$refClass = new ReflectionClass($objectType);
-				$refClassName = $refClass->getName();
-
-				if(isset($this->bindableClassMap[$refClassName]) || $this->isBindable($refClass)) {
-					$bindable = $this->bindableClassMap[$objectType];
-					foreach($bindable as $bindableKey => $bindableClosure) {
-						$cache["$key.$bindableKey"] = $bindableClosure;
-					}
-				}
+			$objectType = $objectKeys[$key] ?? null;
+			if(!$objectType || !$this->shouldExpandObjectType($objectType, $className)) {
+				continue;
 			}
+
+			$this->appendNestedBindableKeys($cache, $key, $objectType);
 		}
 
 		return $cache;
+	}
+
+	private function shouldExpandObjectType(
+		string $objectType,
+		string $className,
+	):bool {
+		if($objectType === $className) {
+			return false;
+		}
+
+		$reflectionClass = new ReflectionClass($objectType);
+		$reflectionClassName = $reflectionClass->getName();
+		return isset($this->bindableClassMap[$reflectionClassName])
+			|| $this->isBindable($reflectionClass);
+	}
+
+	/**
+	 * @param array<string, callable> $cache
+	 */
+	private function appendNestedBindableKeys(
+		array &$cache,
+		string $key,
+		string $objectType,
+	):void {
+		foreach($this->bindableClassMap[$objectType] as $bindableKey => $bindableClosure) {
+			$cache["$key.$bindableKey"] = $bindableClosure;
+		}
 	}
 
 	/**
