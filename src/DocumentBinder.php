@@ -159,15 +159,16 @@ class DocumentBinder extends Binder {
 	}
 
 	public function cleanupDocument():void {
-		/**
-		 * @var Attr[] $xpathResult
-		 */
 		$xpathResult = $this->document->evaluate(
 			"//*/@*[starts-with(name(), 'data-bind')] | //*/@*[starts-with(name(), 'data-list')] | //*/@*[starts-with(name(), 'data-template')] | //*/@*[starts-with(name(), 'data-table-key')] | //*/@*[starts-with(name(), 'data-element')]"
 		);
 
 		$elementsToRemove = [];
-		foreach($xpathResult as $item) {
+		while($item = $xpathResult->iterateNext()) {
+			if(!$item instanceof Attr) {
+				continue;
+			}
+
 			$ownerElement = $item->ownerElement;
 			if($ownerElement->hasAttribute("data-element")) {
 				if(!$ownerElement->hasAttribute("data-bound")) {

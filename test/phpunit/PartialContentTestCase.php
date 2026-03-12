@@ -4,7 +4,6 @@ namespace Gt\DomTemplate\Test;
 use Gt\Dom\HTMLDocument;
 use Gt\DomTemplate\PartialContent;
 use Gt\DomTemplate\PartialContentFileNotFoundException;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 class PartialContentTestCase extends TestCase {
@@ -15,8 +14,8 @@ class PartialContentTestCase extends TestCase {
 	protected function mockPartialContent(
 		string $dirName,
 		array $contentFiles = []
-	):MockObject|PartialContent {
-		$mock = self::createMock(PartialContent::class);
+	):PartialContent {
+		$mock = self::createStub(PartialContent::class);
 		$mock->method("getContent")
 			->willReturnCallback(
 				function(string $name, string $extension = "html", ?string $src = null) use($contentFiles) {

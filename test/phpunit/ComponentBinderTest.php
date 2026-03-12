@@ -40,12 +40,12 @@ class ComponentBinderTest extends TestCase {
 		$componentElement = $document->querySelector("todo-list");
 		$sut = new ComponentBinder($document);
 		$sut->setDependencies(
-			self::createMock(ElementBinder::class),
-			self::createMock(PlaceholderBinder::class),
-			self::createMock(TableBinder::class),
-			self::createMock(ListBinder::class),
-			self::createMock(ListElementCollection::class),
-			self::createMock(BindableCache::class),
+			self::createStub(ElementBinder::class),
+			self::createStub(PlaceholderBinder::class),
+			self::createStub(TableBinder::class),
+			self::createStub(ListBinder::class),
+			self::createStub(ListElementCollection::class),
+			self::createStub(BindableCache::class),
 		);
 		$sut->setComponentBinderDependencies($componentElement);
 		$sut->bindKeyValue("subtitle", "This should not change!");
@@ -63,11 +63,11 @@ class ComponentBinderTest extends TestCase {
 		$sut = new ComponentBinder($document);
 		$sut->setDependencies(
 			$elementBinder,
-			self::createMock(PlaceholderBinder::class),
-			self::createMock(TableBinder::class),
-			self::createMock(ListBinder::class),
-			self::createMock(ListElementCollection::class),
-			self::createMock(BindableCache::class),
+			self::createStub(PlaceholderBinder::class),
+			self::createStub(TableBinder::class),
+			self::createStub(ListBinder::class),
+			self::createStub(ListElementCollection::class),
+			self::createStub(BindableCache::class),
 		);
 		$sut->setComponentBinderDependencies($componentElement);
 		$sut->bindKeyValue("listTitle", "This should change!");
@@ -94,11 +94,11 @@ class ComponentBinderTest extends TestCase {
 		$sut = new ComponentBinder($document);
 		$sut->setDependencies(
 			$elementBinder,
-			self::createMock(PlaceholderBinder::class),
-			self::createMock(TableBinder::class),
-			self::createMock(ListBinder::class),
-			self::createMock(ListElementCollection::class),
-			self::createMock(BindableCache::class),
+			self::createStub(PlaceholderBinder::class),
+			self::createStub(TableBinder::class),
+			self::createStub(ListBinder::class),
+			self::createStub(ListElementCollection::class),
+			self::createStub(BindableCache::class),
 		);
 		$sut->setComponentBinderDependencies($componentElement);
 
@@ -131,11 +131,11 @@ class ComponentBinderTest extends TestCase {
 		$sut = new ComponentBinder($document);
 		$sut->setDependencies(
 			$elementBinder,
-			self::createMock(PlaceholderBinder::class),
-			self::createMock(TableBinder::class),
-			self::createMock(ListBinder::class),
-			self::createMock(ListElementCollection::class),
-			self::createMock(BindableCache::class),
+			self::createStub(PlaceholderBinder::class),
+			self::createStub(TableBinder::class),
+			self::createStub(ListBinder::class),
+			self::createStub(ListElementCollection::class),
+			self::createStub(BindableCache::class),
 		);
 		$sut->setComponentBinderDependencies($componentElement);
 
@@ -166,12 +166,12 @@ class ComponentBinderTest extends TestCase {
 
 		$sut = new ComponentBinder($document);
 		$sut->setDependencies(
-			self::createMock(ElementBinder::class),
-			self::createMock(PlaceholderBinder::class),
-			self::createMock(TableBinder::class),
+			self::createStub(ElementBinder::class),
+			self::createStub(PlaceholderBinder::class),
+			self::createStub(TableBinder::class),
 			$listBinder,
-			self::createMock(ListElementCollection::class),
-			self::createMock(BindableCache::class),
+			self::createStub(ListElementCollection::class),
+			self::createStub(BindableCache::class),
 		);
 		$sut->setComponentBinderDependencies($componentElement);
 
@@ -201,11 +201,11 @@ class ComponentBinderTest extends TestCase {
 		$sut = new ComponentBinder($document);
 		$sut->setDependencies(
 			$elementBinder,
-			self::createMock(PlaceholderBinder::class),
-			self::createMock(TableBinder::class),
-			self::createMock(ListBinder::class),
-			self::createMock(ListElementCollection::class),
-			self::createMock(BindableCache::class),
+			self::createStub(PlaceholderBinder::class),
+			self::createStub(TableBinder::class),
+			self::createStub(ListBinder::class),
+			self::createStub(ListElementCollection::class),
+			self::createStub(BindableCache::class),
 		);
 		$sut->setComponentBinderDependencies($componentElement);
 

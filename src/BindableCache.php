@@ -198,7 +198,6 @@ class BindableCache {
 						try {
 							$objectToExtract = $objectToExtract->$propName;
 						}
-						// @phpstan-ignore-next-line
 						catch(Error) {}
 					}
 					elseif(method_exists($objectToExtract, $bindFunc)) {
