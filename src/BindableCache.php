@@ -2,16 +2,15 @@
 namespace Gt\DomTemplate;
 
 use Closure;
-use Error;
 use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionObject;
+use ReflectionProperty as RefProperty;
 use ReflectionProperty;
 use stdClass;
 use Stringable;
-use Throwable;
 
 class BindableCache {
 	/**
@@ -287,12 +286,16 @@ class BindableCache {
 		string $propertyName,
 	):mixed {
 		if(property_exists($object, $propertyName)) {
-			try {
-				return $object->$propertyName;
-			}
-			catch(Throwable) {
+			$reflectionProperty = new RefProperty($object, $propertyName);
+			if(!$reflectionProperty->isPublic()) {
 				return null;
 			}
+
+			if(!$reflectionProperty->isInitialized($object)) {
+				return null;
+			}
+
+			return $object->$propertyName;
 		}
 
 		$getterName = "get" . ucfirst($propertyName);
