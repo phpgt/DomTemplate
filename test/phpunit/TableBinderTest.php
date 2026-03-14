@@ -12,6 +12,7 @@ use Gt\DomTemplate\ListElementCollection;
 use Gt\DomTemplate\PlaceholderBinder;
 use Gt\DomTemplate\TableBinder;
 use Gt\DomTemplate\TableDataStructureType;
+use Gt\DomTemplate\TableElementNotFoundInContextException;
 use Gt\DomTemplate\Test\TestHelper\HTMLPageContent;
 use PHPUnit\Framework\TestCase;
 
@@ -635,6 +636,65 @@ class TableBinderTest extends TestCase {
 			TableDataStructureType::NORMALISED,
 			$sut->detectTableDataStructureType([]),
 		);
+	}
+
+	public function testDetectTableStructureType_headerValueListRejectsAssocColumns():void {
+		$data = [
+			"name" => [
+				"first" => "Greg",
+				"second" => "Sarah",
+			],
+			"species" => [
+				"first" => "Human",
+				"second" => "Human",
+			],
+		];
+		$sut = new TableBinder();
+
+		self::expectException(IncorrectTableDataFormat::class);
+		$sut->detectTableDataStructureType($data);
+	}
+
+	public function testDetectTableStructureType_listRejectsMixedRowShapes():void {
+		$data = [
+			["Item", "Price", "Stock Level"],
+			["Washing machine", 698_00, 24],
+			[
+				"Television" => "99800",
+				"Stock Level" => "7",
+			],
+		];
+		$sut = new TableBinder();
+
+		self::expectException(IncorrectTableDataFormat::class);
+		$sut->detectTableDataStructureType($data);
+	}
+
+	public function testBindTableData_noTableInitializesFallbackDependencies():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_EMPTY);
+		$sut = new TableBinder();
+
+		self::expectException(TableElementNotFoundInContextException::class);
+		$sut->bindTableData([
+			["Column"],
+			["Value"],
+		], $document);
+	}
+
+	public function testBindTableData_initializesFallbackDependenciesWhenTableExists():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_TABLES);
+		$sut = new TableBinder();
+		$tableData = [
+			["Name", "Position"],
+			["Alan Statham", "Head of Radiology"],
+			["Sue White", "Staff Liason Officer"],
+		];
+
+		$sut->bindTableData($tableData, $document, "tableData");
+
+		$table = $document->getElementById("tbl1");
+		self::assertSame("Alan Statham", $table->tBodies[0]->rows[0]->cells[0]->textContent);
+		self::assertSame("Staff Liason Officer", $table->tBodies[0]->rows[1]->cells[1]->textContent);
 	}
 
 	private function tablebinderDependencies(HTMLDocument $document):array {

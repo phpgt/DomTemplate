@@ -511,6 +511,23 @@ class DocumentBinderTest extends TestCase {
 		}
 	}
 
+	public function testBindTable_stringContext():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_TABLES);
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+
+		$tableData = [
+			["Name", "Position"],
+			["Alan Statham", "Head of Radiology"],
+			["Sue White", "Staff Liason Officer"],
+		];
+
+		$sut->bindTable($tableData, "#tbl1", "tableData");
+		$table = $document->getElementById("tbl1");
+		self::assertSame("Alan Statham", $table->rows[1]->cells[0]->textContent);
+		self::assertSame("Staff Liason Officer", $table->rows[2]->cells[1]->textContent);
+	}
+
 	public function testBindTable_withNullData():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_TABLES);
 		$sut = new DocumentBinder($document);
@@ -1466,11 +1483,11 @@ class DocumentBinderTest extends TestCase {
 		$sut = new DocumentBinder($document);
 		$sut->setDependencies(
 			$elementBinder,
-			self::createMock(PlaceholderBinder::class),
-			self::createMock(TableBinder::class),
-			self::createMock(ListBinder::class),
-			self::createMock(ListElementCollection::class),
-			self::createMock(BindableCache::class),
+			self::createStub(PlaceholderBinder::class),
+			self::createStub(TableBinder::class),
+			self::createStub(ListBinder::class),
+			self::createStub(ListElementCollection::class),
+			self::createStub(BindableCache::class),
 		);
 
 		$sut->bindKeyValue("title", "Title 1!", "#subcomponent-1");
@@ -1502,11 +1519,11 @@ class DocumentBinderTest extends TestCase {
 		$sut = new DocumentBinder($document);
 		$sut->setDependencies(
 			$elementBinder,
-			self::createMock(PlaceholderBinder::class),
-			self::createMock(TableBinder::class),
-			self::createMock(ListBinder::class),
-			self::createMock(ListElementCollection::class),
-			self::createMock(BindableCache::class),
+			self::createStub(PlaceholderBinder::class),
+			self::createStub(TableBinder::class),
+			self::createStub(ListBinder::class),
+			self::createStub(ListElementCollection::class),
+			self::createStub(BindableCache::class),
 		);
 
 		$sut->bindData(["title" => "Title 1!", "number" => "1"], "#subcomponent-1");
@@ -1536,12 +1553,12 @@ class DocumentBinderTest extends TestCase {
 
 		$sut = new DocumentBinder($document);
 		$sut->setDependencies(
-			self::createMock(ElementBinder::class),
-			self::createMock(PlaceholderBinder::class),
-			self::createMock(TableBinder::class),
+			self::createStub(ElementBinder::class),
+			self::createStub(PlaceholderBinder::class),
+			self::createStub(TableBinder::class),
 			$listBinder,
-			self::createMock(ListElementCollection::class),
-			self::createMock(BindableCache::class),
+			self::createStub(ListElementCollection::class),
+			self::createStub(BindableCache::class),
 		);
 
 		$sut->bindList(["List", "for", "component 2"], "#subcomponent-2");
@@ -1570,11 +1587,11 @@ class DocumentBinderTest extends TestCase {
 		$sut = new DocumentBinder($document);
 		$sut->setDependencies(
 			$elementBinder,
-			self::createMock(PlaceholderBinder::class),
-			self::createMock(TableBinder::class),
-			self::createMock(ListBinder::class),
-			self::createMock(ListElementCollection::class),
-			self::createMock(BindableCache::class),
+			self::createStub(PlaceholderBinder::class),
+			self::createStub(TableBinder::class),
+			self::createStub(ListBinder::class),
+			self::createStub(ListElementCollection::class),
+			self::createStub(BindableCache::class),
 		);
 
 		$sut->bindValue("1", "#subcomponent-1");

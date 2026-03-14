@@ -25,7 +25,10 @@ class ListElementCollection {
 
 		if($templateName) {
 			if(!isset($this->elementKVP[$templateName])) {
-				throw new ListElementNotFoundInContextException("List element with name \"$templateName\" can not be found within the context $context->tagName element.");
+				throw new ListElementNotFoundInContextException(
+					"List element with name \"$templateName\" can not be "
+					. "found within the context $context->tagName element."
+				);
 			}
 			return $this->elementKVP[$templateName];
 		}
@@ -43,12 +46,11 @@ class ListElementCollection {
 			$dataTemplateArray[$key] = $templateElement;
 		}
 
-		uksort($dataTemplateArray,
-			fn(string $a, string $b):int => (
-				(substr_count($a, "/") > substr_count($b, "/"))
+		uksort(
+			$dataTemplateArray,
+			fn(string $a, string $b):int => substr_count($a, "/") > substr_count($b, "/")
 				? -1
 				: 1
-			)
 		);
 
 		foreach($dataTemplateArray as $template) {
@@ -97,7 +99,8 @@ class ListElementCollection {
 		$elementNodePath = $context->getNodePath();
 
 		throw new ListElementNotFoundInContextException(
-			"There is no unnamed list element in the context element $elementDescription ($elementNodePath)."
+			"There is no unnamed list element in the context element "
+			. "$elementDescription ($elementNodePath)."
 		);
 	}
 }

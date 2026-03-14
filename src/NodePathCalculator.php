@@ -26,11 +26,11 @@ class NodePathCalculator implements Stringable {
 					. "='$dataTemplateParent'";
 			}
 
-			if($id = $context->id) {
+			if($elementId = $context->id) {
 				if($attrPath) {
 					$attrPath .= " and ";
 				}
-				$attrPath .= "@id='$id'";
+				$attrPath .= "@id='$elementId'";
 			}
 
 			foreach($context->classList as $class) {

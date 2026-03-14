@@ -82,4 +82,12 @@ class PlaceholderBinderTest extends TestCase {
 		$sut->bind("tierId", "47297", $link);
 		self::assertSame("https://github.com/sponsors/PhpGt/sponsorships?tier_id=47297", $link->href);
 	}
+
+	public function testBind_keyMismatchDoesNothing():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_PLACEHOLDER);
+		$sut = new PlaceholderBinder();
+		$greeting = $document->querySelector("#test2 .greeting");
+		$sut->bind("otherKey", "Cody", $greeting);
+		self::assertSame("Hello, {{name ?? you}}!", $greeting->textContent);
+	}
 }

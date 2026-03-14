@@ -46,7 +46,9 @@ class ComponentExpander extends PartialContentExpander {
 					$recursiveExpandedComponents
 				);
 			}
-			catch(Throwable) {}
+			catch(Throwable) {
+				continue;
+			}
 		}
 
 		return $expandedComponentArray;

@@ -58,17 +58,14 @@ class ListElement {
 // In nested lists, there may not be an actual element attached to the document
 // yet, but the parent still has a path - this outcome is expected and
 // completely fine in this case.
-		catch(Throwable) {}
+		catch(Throwable) {
+			return;
+		}
 	}
 
 	public function getClone():Node|Element {
-// TODO: #368 Bug here - the template-parent-xxx ID is being generated the same for multiple instances.
 		/** @var Element $element */
 		$element = $this->originalElement->cloneNode(true);
-//		foreach($this->originalElement->ownerDocument->evaluate("./*[starts-with(@id,'template-parent-')]", $element) as $existingTemplateElement) {
-//			$existingTemplateElement->id = uniqid("template-parent-");
-//		}
-//		$this->templateParentPath = new NodePathCalculator($element->parentElement);
 		return $element;
 	}
 
@@ -147,12 +144,16 @@ class ListElement {
 	}
 
 	public function getListItemName():?string {
-		$listName = $this->originalElement->getAttribute("data-list") ?? $this->originalElement->getAttribute("data-template");
+		$listName = $this->originalElement->getAttribute("data-list")
+			?? $this->originalElement->getAttribute("data-template");
 		if(strlen($listName) === 0) {
 			return null;
 		}
 		elseif($listName[0] === "/") {
-			throw new InvalidListElementNameException("A list's name must not start with a forward slash (\"$listName\")");
+			throw new InvalidListElementNameException(
+				"A list's name must not start with a forward slash "
+				. "(\"$listName\")"
+			);
 		}
 
 		return $listName;

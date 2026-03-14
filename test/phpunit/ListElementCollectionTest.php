@@ -24,6 +24,17 @@ class ListElementCollectionTest extends TestCase {
 		$sut->get($document->querySelector("ol"));
 	}
 
+	public function testGet_noName_noMatchIncludesContextDescription():void {
+		$document = new HTMLDocument(
+			"<!doctype html><html><body><div id='example' class='one two'></div></body></html>"
+		);
+		$sut = new ListElementCollection($document);
+
+		self::expectException(ListElementNotFoundInContextException::class);
+		self::expectExceptionMessage("div.one.two#example");
+		$sut->get($document->querySelector("div"));
+	}
+
 	public function testGet_noName():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_LIST);
 		$ul = $document->querySelector("ul");

@@ -4,7 +4,6 @@ namespace Gt\DomTemplate;
 use Gt\Dom\Attr;
 use Gt\Dom\Document;
 use Gt\Dom\DOMTokenList;
-use Gt\Dom\DOMTokenListFactory;
 use Gt\Dom\Element;
 
 class HTMLAttributeBinder {
@@ -24,78 +23,40 @@ class HTMLAttributeBinder {
 		if(is_null($value)) {
 			return;
 		}
-		if(!is_scalar($value) && !is_iterable($value)) {
-			$value = new BindValue($value);
-		}
 
 		if($element instanceof Document) {
 			$element = $element->documentElement;
 		}
 
+		$bindValue = $this->normalizeBindValue($value);
 		$attributesToRemove = [];
-
-		/**
-		 * @var string $attrName
-		 * @var Attr $attr
-		 */
-		foreach($element->attributes as $attrName => $attr) {
-			$attrValue = $attr->value;
-
-			if($attrName === "data-element") {
-				if($attr->value === $key && $value) {
-					$element->setAttribute("data-bound", "");
-				}
-			}
-
-			if(!str_starts_with($attrName, "data-bind")) {
+		foreach($element->attributes as $attributeName => $attribute) {
+			/** @var Attr $attribute */
+			$this->markBoundElement($element, $attribute, $key, $bindValue);
+			if(!$this->shouldHandleAttribute($attributeName)) {
 				continue;
 			}
 
-			if(!str_contains($attrName, ":")) {
-				$tag = $this->getHTMLTag($element);
-				throw new InvalidBindPropertyException("$tag Element has a data-bind attribute with missing bind property - did you mean `data-bind:text`?");
+			$bindProperty = $this->getBindProperty($element, $attributeName);
+			$modifier = $this->resolveModifier($key, $attribute->value);
+			if($modifier === false) {
+				continue;
 			}
 
-			$modifier = null;
-			if(is_null($key)) {
-// If there is no key specified, only bind the elements that don't have a
-// specified key in their bind attribute's value.
-				if(strlen($attrValue) > 0) {
-					continue;
-				}
-			}
-			else {
-// If a key is specified, and the bind attribute's value doesn't match,
-// skip this attribute.
-				$trimmedAttrValue = ltrim($attrValue, ":!?");
-				$trimmedAttrValue = strtok($trimmedAttrValue, " ");
-				if($key !== $trimmedAttrValue && $trimmedAttrValue !== "@") {
-					continue;
-				}
-				if($attrValue !== $trimmedAttrValue) {
-					$modifier = $attrValue;
-				}
-			}
-
-			$bindProperty = substr(
-				$attrName,
-				strpos($attrName, ":") + 1
-			);
 			$this->setBindProperty(
 				$element,
 				$bindProperty,
-				$value,
-				$modifier
+				$bindValue,
+				$modifier,
 			);
 			$element->setAttribute("data-bound", "");
-
-			if(!$attr->ownerElement->hasAttribute("data-rebind")) {
-				array_push($attributesToRemove, $attrName);
+			if(!$attribute->ownerElement->hasAttribute("data-rebind")) {
+				$attributesToRemove[] = $attributeName;
 			}
 		}
 
-		foreach($attributesToRemove as $attrName) {
-			$element->removeAttribute($attrName);
+		foreach($attributesToRemove as $attributeName) {
+			$element->removeAttribute($attributeName);
 		}
 	}
 
@@ -113,17 +74,7 @@ class HTMLAttributeBinder {
 
 			if($attrName === "data-bind:list") {
 				if($attrValue === "") {
-					$attrValue = $element->tagName;
-					if(str_contains($attrValue, "-")) {
-						$newAttrValue = "";
-						foreach(explode("-", $attrValue) as $i => $part) {
-							if($i > 0) {
-								$part = ucfirst($part);
-							}
-							$newAttrValue .= $part;
-						}
-						$attrValue = $newAttrValue;
-					}
+					$attrValue = $this->defaultListBindingName($element);
 					$element->setAttribute($attrName, $attrValue);
 				}
 			}
@@ -133,12 +84,9 @@ class HTMLAttributeBinder {
 			}
 
 			if($attrValue[0] === "@") {
-				if($attrValue === "@") {
-					$otherAttrName = "name";
-				}
-				else {
-					$otherAttrName = substr($attrValue, 1);
-				}
+				$otherAttrName = $attrValue === "@"
+					? "name"
+					: substr($attrValue, 1);
 				$element->setAttribute(
 					$attrName,
 					$element->getAttribute($otherAttrName)
@@ -147,7 +95,84 @@ class HTMLAttributeBinder {
 		}
 	}
 
-	private function getHTMLTag(Element $element):string {
+	private function normalizeBindValue(mixed $value):mixed {
+		if(is_scalar($value) || is_iterable($value)) {
+			return $value;
+		}
+
+		return new BindValue($value);
+	}
+
+	private function markBoundElement(
+		Element $element,
+		Attr $attribute,
+		?string $key,
+		mixed $value,
+	):void {
+		if($attribute->name === "data-element"
+		&& $attribute->value === $key
+		&& $value) {
+			$element->setAttribute("data-bound", "");
+		}
+	}
+
+	private function shouldHandleAttribute(string $attributeName):bool {
+		return str_starts_with($attributeName, "data-bind");
+	}
+
+	private function getBindProperty(
+		Element $element,
+		string $attributeName,
+	):string {
+		if(!str_contains($attributeName, ":")) {
+			$tag = $this->getHtmlTag($element);
+			throw new InvalidBindPropertyException(
+				"$tag Element has a data-bind attribute with missing "
+				. "bind property - did you mean `data-bind:text`?"
+			);
+		}
+
+		return substr($attributeName, strpos($attributeName, ":") + 1);
+	}
+
+	private function resolveModifier(
+		?string $key,
+		string $attributeValue,
+	):string|false|null {
+		if(is_null($key)) {
+			return $attributeValue === ""
+				? null
+				: false;
+		}
+
+		$trimmedAttrValue = ltrim($attributeValue, ":!?");
+		$trimmedAttrValue = strtok($trimmedAttrValue, " ");
+		if($key !== $trimmedAttrValue && $trimmedAttrValue !== "@") {
+			return false;
+		}
+
+		return $attributeValue !== $trimmedAttrValue
+			? $attributeValue
+			: null;
+	}
+
+	private function defaultListBindingName(Element $element):string {
+		$tagName = $element->tagName;
+		if(!str_contains($tagName, "-")) {
+			return $tagName;
+		}
+
+		$listName = "";
+		foreach(explode("-", $tagName) as $index => $part) {
+			$listName .= $index === 0
+				? $part
+				: ucfirst($part);
+		}
+
+		return $listName;
+	}
+
+	private function getHtmlTag(Element $element):string {
 		return "<" . strtolower($element->tagName) . ">";
 	}
 
@@ -197,77 +222,104 @@ class HTMLAttributeBinder {
 		mixed $bindValue,
 		?string $modifier = null
 	):void {
-		switch(strtolower($bindProperty)) {
-		case "text":
-		case "innertext":
-		case "inner-text":
-		case "textcontent":
-		case "text-content":
+		$normalizedProperty = strtolower($bindProperty);
+		if($this->isTextBinding($normalizedProperty)) {
 			$element->textContent = $bindValue;
-			break;
+			return;
+		}
 
-		case "html":
-		case "innerhtml":
-		case "inner-html":
+		if($this->isHtmlBinding($normalizedProperty)) {
 			$element->innerHTML = $bindValue;
-			break;
+			return;
+		}
 
+		switch($normalizedProperty) {
 		case "class":
-			if($modifier) {
-				$this->handleModifier(
-					$element,
-					"class",
-					$modifier,
-					$bindValue
-				);
-			}
-			else {
-				$element->classList->add($bindValue);
-			}
-			break;
+			$this->bindClassProperty($element, $bindValue, $modifier);
+			return;
 
 		case "table":
 			$this->tableBinder->bindTableData(
 				$bindValue,
 				$element,
-				$element->getAttribute("data-bind:$bindProperty")
+				$element->getAttribute("data-bind:$bindProperty"),
 			);
-			break;
+			return;
 
 		case "value":
 			$element->value = $bindValue;
-			break;
+			return;
 
 		case "list":
 			$this->listBinder->bindListData($bindValue, $element);
-			break;
+			return;
 
 		case "remove":
-			$remove = $bindValue;
-			if(str_contains($modifier, "!")) {
-				$remove = !$remove;
-			}
-
-			if($remove) {
-				$element->remove();
-			}
-			break;
-
-		default:
-			if($modifier) {
-				$this->handleModifier(
-					$element,
-					$bindProperty,
-					$modifier,
-					$bindValue
-				);
-			}
-			else {
-				$element->setAttribute($bindProperty, $bindValue);
-			}
-
-			break;
+			$this->bindRemoveProperty($element, $bindValue, $modifier);
+			return;
 		}
+
+		$this->bindDefaultProperty($element, $bindProperty, $bindValue, $modifier);
+	}
+
+	private function isTextBinding(string $bindProperty):bool {
+		return in_array($bindProperty, [
+			"text",
+			"innertext",
+			"inner-text",
+			"textcontent",
+			"text-content",
+		], true);
+	}
+
+	private function isHtmlBinding(string $bindProperty):bool {
+		return in_array($bindProperty, [
+			"html",
+			"innerhtml",
+			"inner-html",
+		], true);
+	}
+
+	private function bindClassProperty(
+		Element $element,
+		mixed $bindValue,
+		?string $modifier,
+	):void {
+		if($modifier) {
+			$this->handleModifier($element, "class", $modifier, $bindValue);
+			return;
+		}
+
+		$element->classList->add($bindValue);
+	}
+
+	private function bindRemoveProperty(
+		Element $element,
+		mixed $bindValue,
+		?string $modifier,
+	):void {
+		$remove = $bindValue;
+		if($modifier && str_contains($modifier, "!")) {
+			$remove = !$remove;
+		}
+
+		if($remove) {
+			$element->remove();
+		}
+	}
+
+	private function bindDefaultProperty(
+		Element $element,
+		string $bindProperty,
+		mixed $bindValue,
+		?string $modifier,
+	):void {
+		if($modifier) {
+			$this->handleModifier($element, $bindProperty, $modifier, $bindValue);
+			return;
+		}
+
+		$element->setAttribute($bindProperty, $bindValue);
 	}
 
 	private function handleModifier(
@@ -313,7 +365,7 @@ class HTMLAttributeBinder {
 		Element $node,
 		string $attribute
 	):DOMTokenList {
-		return DOMTokenListFactory::create(
+		return new MutableDomTokenList(
 			fn() => explode(" ", $node->getAttribute($attribute) ?? ""),
 			fn(string...$tokens) => $node->setAttribute($attribute, implode(" ", $tokens)),
 		);

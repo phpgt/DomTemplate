@@ -49,6 +49,18 @@ class PartialContentTest extends TestCase {
 		);
 	}
 
+	public function testGetContent_src():void {
+		$expectedContent = "Nested test file contents";
+		$dir = $this->baseDir . "/" . uniqid("_partial");
+		mkdir("$dir/component", 0775, true);
+		file_put_contents("$dir/component/variant.html", $expectedContent);
+		$sut = new PartialContent($dir);
+		self::assertSame(
+			$expectedContent,
+			$sut->getContent("component", src: "variant")
+		);
+	}
+
 	public function testGetHTMLDocument():void {
 		$expectedContent = "<!doctype html><h1>Test file contents</h1>";
 		$dir = $this->baseDir . "/" . uniqid("_partial");

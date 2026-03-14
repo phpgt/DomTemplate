@@ -53,10 +53,10 @@ class ListBinderTest extends TestCase {
 		$document = new HTMLDocument(HTMLPageContent::HTML_LIST);
 
 		$templateParent = $document->querySelector("ul");
-		$templateElement = self::createMock(ListElement::class);
+		$templateElement = self::createStub(ListElement::class);
 		$templateElement->method("getListItemParent")
 			->willReturn($templateParent);
-		$listElementCollection = self::createMock(ListElementCollection::class);
+		$listElementCollection = self::createStub(ListElementCollection::class);
 		$listElementCollection->method("get")
 			->willReturn($templateElement);
 
@@ -260,7 +260,7 @@ class ListBinderTest extends TestCase {
 			$document->querySelector("#favourites li[data-list='game']")
 		);
 
-		$listElementCollection = self::createMock(ListElementCollection::class);
+		$listElementCollection = self::createStub(ListElementCollection::class);
 		$listElementCollection->method("get")
 			->willReturnCallback(function(Element $documentElement, string $name)use($templateElementProgLang, $templateElementGame):ListElement {
 				return $name === "game" ? $templateElementGame : $templateElementProgLang;
@@ -298,7 +298,7 @@ class ListBinderTest extends TestCase {
 			$document->querySelector("#game-list li[data-list]")
 		);
 
-		$listElementCollection = self::createMock(ListElementCollection::class);
+		$listElementCollection = self::createStub(ListElementCollection::class);
 		$listElementCollection->method("get")
 			->willReturnCallback(function(Element $element)use($templateElementProgLang, $templateElementGame):ListElement {
 				return ($element->id === "prog-lang-list")
@@ -327,7 +327,7 @@ class ListBinderTest extends TestCase {
 	public function testBindListData_empty_parentShouldBeEmpty():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_LIST);
 		$listElement = new ListElement($document->querySelector("li[data-list]"));
-		$listElementCollection = self::createMock(ListElementCollection::class);
+		$listElementCollection = self::createStub(ListElementCollection::class);
 		$listElementCollection->method("get")
 			->willReturn($listElement);
 		$listElement->removeOriginalElement();
@@ -349,7 +349,7 @@ class ListBinderTest extends TestCase {
 		$orderList = $document->querySelector("ul");
 
 		$templateElement = new ListElement($document->querySelector("ul li[data-list]"));
-		$listElementCollection = self::createMock(ListElementCollection::class);
+		$listElementCollection = self::createStub(ListElementCollection::class);
 		$listElementCollection->method("get")
 			->willReturn($templateElement);
 		$templateElement->removeOriginalElement();
@@ -375,7 +375,7 @@ class ListBinderTest extends TestCase {
 		$orderList = $document->querySelector("ul");
 
 		$templateElement = new ListElement($document->querySelector("ul li[data-list]"));
-		$listElementCollection = self::createMock(ListElementCollection::class);
+		$listElementCollection = self::createStub(ListElementCollection::class);
 		$listElementCollection->method("get")
 			->willReturn($templateElement);
 		$templateElement->removeOriginalElement();
@@ -402,7 +402,7 @@ class ListBinderTest extends TestCase {
 		$orderList = $document->querySelector("ul");
 
 		$templateElement = new ListElement($document->querySelector("ul li[data-list]"));
-		$listElementCollection = self::createMock(ListElementCollection::class);
+		$listElementCollection = self::createStub(ListElementCollection::class);
 		$listElementCollection->method("get")
 			->willReturn($templateElement);
 		$templateElement->removeOriginalElement();
@@ -481,7 +481,7 @@ class ListBinderTest extends TestCase {
 		$orderList = $document->querySelector("ul");
 
 		$templateElement = new ListElement($document->querySelector("ul li[data-list]"));
-		$listElementCollection = self::createMock(ListElementCollection::class);
+		$listElementCollection = self::createStub(ListElementCollection::class);
 		$listElementCollection->method("get")
 			->willReturn($templateElement);
 		$templateElement->removeOriginalElement();
@@ -538,7 +538,7 @@ class ListBinderTest extends TestCase {
 		$orderList = $document->querySelector("ul");
 
 		$templateElement = new ListElement($document->querySelector("ul li[data-list]"));
-		$listElementCollection = self::createMock(ListElementCollection::class);
+		$listElementCollection = self::createStub(ListElementCollection::class);
 		$listElementCollection->method("get")
 			->willReturn($templateElement);
 		$templateElement->removeOriginalElement();

@@ -2,14 +2,13 @@
 namespace Gt\DomTemplate;
 
 use Closure;
-use Error;
 use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionObject;
+use ReflectionProperty as RefProperty;
 use ReflectionProperty;
-use ReflectionType;
 use stdClass;
 use Stringable;
 
@@ -31,125 +30,222 @@ class BindableCache {
 		$this->nonBindableClassMap = [];
 	}
 
-	public function isBindable(object $object, bool $recursive = false):bool {
-		$refObj = null;
-
-		if($object instanceof ReflectionClass) {
-			$refObj = $object;
-			$classString = $refObj->getNamespaceName() . "\\" . $refObj->getShortName();
-		}
-		else {
-			$classString = $object::class;
-		}
-
-		if(isset($this->bindableClassMap[$classString])) {
+	public function isBindable(object $object):bool {
+		$className = $this->getClassName($object);
+		if(isset($this->bindableClassMap[$className])) {
 			return true;
 		}
 
-		if(isset($this->nonBindableClassMap[$classString])) {
+		if(isset($this->nonBindableClassMap[$className])) {
 			return false;
 		}
 
-// Reflection is SLOW! The two checks above ensure that this step is only done
-// once per class (not object).
-		if(!$refObj) {
-			$refObj = new ReflectionObject($object);
-		}
-		$attributeCache = [];
-		$cacheObjectKeys = [];
-
-		foreach($refObj->getMethods() as $refMethod) {
-			$refAttributes = $this->getBindAttributes($refMethod);
-			$methodName = $refMethod->getName();
-
-			/** @var ?ReflectionNamedType $refReturn */
-			$refReturn = $refMethod->getReturnType();
-			if(!$refReturn instanceof ReflectionNamedType) {
-				continue;
-			}
-			$refReturnName = $refReturn->getName();
-
-			foreach($refAttributes as $refAttr) {
-				$bindKey = $this->getBindKey($refAttr, $refMethod);
-				$attributeCache[$bindKey] = fn(object $object):null|iterable|string => $this->nullableStringOrIterable($object, $methodName);
-
-				if(class_exists($refReturnName)) {
-					$cacheObjectKeys[$bindKey] = $refReturnName;
-				}
-			}
-		}
-
-		foreach($refObj->getProperties() as $refProp) {
-			$propName = $refProp->getName();
-
-			if($refAttributes = $this->getBindAttributes($refProp)) {
-				foreach($refAttributes as $refAttr) {
-					$bindKey = $this->getBindKey($refAttr);
-// TODO: Test for object type in object property.
-					$attributeCache[$bindKey]
-						= fn(object $object, $key):null|iterable|string => $this->nullableStringOrIterable($object, $propName);
-				}
-			}
-			elseif($refProp->isPublic()) {
-				$bindKey = $propName;
-
-				$refTypeName = null;
-				$refType = $refProp->getType();
-				if($refType instanceof ReflectionNamedType) {
-					$refTypeName = $refType->getName();
-				}
-				$attributeCache[$bindKey] =
-					fn(object $object, $key):null|iterable|string =>
-					isset($object->$key)
-						? $this->nullableStringOrIterable($object, $key)
-						: null;
-
-				if($refTypeName && class_exists($refTypeName)) {
-					$cacheObjectKeys[$bindKey] = $refTypeName;
-				}
-			}
-		}
-
+		$reflectionClass = $this->getReflectionClass($object);
+		[$attributeCache, $objectKeys] = $this->buildClassMap($reflectionClass);
 		if(empty($attributeCache)) {
-			$this->nonBindableClassMap[$object::class] = true;
+			$this->nonBindableClassMap[$className] = true;
 			return false;
 		}
 
-		$this->bindableClassMap[$classString] = $attributeCache;
-		$attributeCache = $this->expandObjects(
+		$this->bindableClassMap[$className] = $this->expandObjects(
 			$attributeCache,
-			$cacheObjectKeys,
+			$objectKeys,
+			$className,
 		);
-
-		$this->bindableClassMap[$classString] = $attributeCache;
 		return true;
 	}
 
+	private function getClassName(object $object):string {
+		if($object instanceof ReflectionClass) {
+			return $object->getName();
+		}
+
+		return $object::class;
+	}
+
+	/** @return ReflectionClass<object> */
+	private function getReflectionClass(object $object):ReflectionClass {
+		if($object instanceof ReflectionClass) {
+			return $object;
+		}
+
+		return new ReflectionObject($object);
+	}
+
 	/**
-	 * @param array<string, Closure> $cache
-	 * @param array<string, class-string> $objectKeys
-	 * @return array<string, Closure>
+	 * @param ReflectionClass<object> $reflectionClass
+	 * @return array{
+	 *  0: array<string, Closure>,
+	 *  1: array<string, class-string>
+	 * }
 	 */
-	private function expandObjects(array $cache, array $objectKeys):array {
+	private function buildClassMap(ReflectionClass $reflectionClass):array {
+		$attributeCache = [];
+		$objectKeys = [];
+
+		foreach($reflectionClass->getMethods() as $reflectionMethod) {
+			$this->addMethodBindings(
+				$attributeCache,
+				$objectKeys,
+				$reflectionMethod,
+			);
+		}
+
+		foreach($reflectionClass->getProperties() as $reflectionProperty) {
+			$this->addPropertyBindings(
+				$attributeCache,
+				$objectKeys,
+				$reflectionProperty,
+			);
+		}
+
+		return [$attributeCache, $objectKeys];
+	}
+
+	/**
+	 * @param array<string, Closure> $attributeCache
+	 * @param array<string, class-string> $objectKeys
+	 */
+	private function addMethodBindings(
+		array &$attributeCache,
+		array &$objectKeys,
+		ReflectionMethod $reflectionMethod,
+	):void {
+		$returnType = $reflectionMethod->getReturnType();
+		if(!$returnType instanceof ReflectionNamedType) {
+			return;
+		}
+
+		$methodName = $reflectionMethod->getName();
+		foreach($this->getBindAttributes($reflectionMethod) as $reflectionAttribute) {
+			$bindKey = $this->getBindKey($reflectionAttribute, $reflectionMethod);
+			$attributeCache[$bindKey] = fn(object $object):null|iterable|string
+				=> $this->nullableStringOrIterable($object, $methodName);
+			$this->cacheNestedClassName(
+				$objectKeys,
+				$bindKey,
+				$returnType->getName(),
+			);
+		}
+	}
+
+	/**
+	 * @param array<string, Closure> $attributeCache
+	 * @param array<string, class-string> $objectKeys
+	 */
+	private function addPropertyBindings(
+		array &$attributeCache,
+		array &$objectKeys,
+		ReflectionProperty $reflectionProperty,
+	):void {
+		$propertyName = $reflectionProperty->getName();
+		$attributeList = $this->getBindAttributes($reflectionProperty);
+
+		if(!empty($attributeList)) {
+			foreach($attributeList as $reflectionAttribute) {
+				$bindKey = $this->getBindKey($reflectionAttribute);
+				$attributeCache[$bindKey] = fn(object $object):null|iterable|string
+					=> $this->nullableStringOrIterable($object, $propertyName);
+				$this->cacheNestedClassName(
+					$objectKeys,
+					$bindKey,
+					$this->getNamedTypeName($reflectionProperty),
+				);
+			}
+
+			return;
+		}
+
+		if(!$reflectionProperty->isPublic()) {
+			return;
+		}
+
+		$attributeCache[$propertyName] = fn(object $object):null|iterable|string
+			=> isset($object->$propertyName)
+				? $this->nullableStringOrIterable($object, $propertyName)
+				: null;
+		$this->cacheNestedClassName(
+			$objectKeys,
+			$propertyName,
+			$this->getNamedTypeName($reflectionProperty),
+		);
+	}
+
+	/**
+	 * @param array<string, class-string> $objectKeys
+	 */
+	private function cacheNestedClassName(
+		array &$objectKeys,
+		string $bindKey,
+		?string $typeName,
+	):void {
+		if($typeName && class_exists($typeName)) {
+			$objectKeys[$bindKey] = $typeName;
+		}
+	}
+
+	private function getNamedTypeName(
+		ReflectionMethod|ReflectionProperty $reflectionTarget,
+	):?string {
+		$type = $reflectionTarget->getType();
+		if(!$type instanceof ReflectionNamedType) {
+			return null;
+		}
+
+		return $type->getName();
+	}
+
+	/**
+	 * @param array<string, callable> $cache
+	 * @param array<string, class-string> $objectKeys
+	 * @return array<string, callable>
+	 */
+	private function expandObjects(
+		array $cache,
+		array $objectKeys,
+		string $className,
+	):array {
 		if(empty($objectKeys)) {
 			return $cache;
 		}
 
-		foreach($cache as $key => $closure) {
-			if($objectType = $objectKeys[$key] ?? null) {
-				$refClass = new ReflectionClass($objectType);
-				$refClassName = $refClass->getName();
-
-				if(isset($this->bindableClassMap[$refClassName]) || $this->isBindable($refClass)) {
-					$bindable = $this->bindableClassMap[$objectType];
-					foreach($bindable as $bindableKey => $bindableClosure) {
-						$cache["$key.$bindableKey"] = $bindableClosure;
-					}
-				}
+		foreach(array_keys($cache) as $key) {
+			$objectType = $objectKeys[$key] ?? null;
+			if(!$objectType || !$this->shouldExpandObjectType($objectType, $className)) {
+				continue;
 			}
+
+			$this->appendNestedBindableKeys($cache, $key, $objectType);
 		}
 
 		return $cache;
+	}
+
+	private function shouldExpandObjectType(
+		string $objectType,
+		string $className,
+	):bool {
+		if($objectType === $className) {
+			return false;
+		}
+
+		$reflectionClass = new ReflectionClass($objectType);
+		$reflectionClassName = $reflectionClass->getName();
+		return isset($this->bindableClassMap[$reflectionClassName])
+			|| $this->isBindable($reflectionClass);
+	}
+
+	/**
+	 * @param array<string, callable> $cache
+	 */
+	private function appendNestedBindableKeys(
+		array &$cache,
+		string $key,
+		string $objectType,
+	):void {
+		foreach($this->bindableClassMap[$objectType] as $bindableKey => $bindableClosure) {
+			$cache["$key.$bindableKey"] = $bindableClosure;
+		}
 	}
 
 	/**
@@ -157,73 +253,101 @@ class BindableCache {
 	 * @return array<string, string>
 	 */
 	public function convertToKvp(object|array $object):array {
-		$kvp = [];
 		if(is_array($object)) {
 			return $object;
 		}
 
 		if($object instanceof stdClass) {
-			foreach(get_object_vars($object) as $key => $value) {
-				if(is_null($value)) {
-					$kvp[$key] = null;
-				}
-				elseif(is_iterable($value)) {
-					$kvp[$key] = $value;
-				}
-				else {
-					$kvp[$key] = (string)$value;
-				}
-			}
-			return $kvp;
+			return $this->stringifyMap(get_object_vars($object));
 		}
 
 		if(!$this->isBindable($object)) {
 			return [];
 		}
 
-		$className = $object::class;
-		foreach($this->bindableClassMap[$className] as $key => $closure) {
-			$objectToExtract = $object;
-			$deepKey = $key;
-			$deepestKey = $key;
-			while(str_contains($deepKey, ".")) {
-				$propName = strtok($deepKey, ".");
-				$deepKey = substr($deepKey, strpos($deepKey, ".") + 1);
-				$deepestKey = $deepKey;
-// TODO: This "get*()" function should not be hard coded here - it should load the appropriate
-// Bind/BindGetter by matching the correct Attribute.
-				$bindFunc = "get" . ucfirst($propName);
-				if($objectToExtract) {
-					if(property_exists($objectToExtract, $propName)) {
-						try {
-							$objectToExtract = $objectToExtract->$propName;
-						}
-						// @phpstan-ignore-next-line
-						catch(Error) {}
-					}
-					elseif(method_exists($objectToExtract, $bindFunc)) {
-						$objectToExtract = $objectToExtract->$bindFunc();
-					}
-				}
-			}
+		return $this->convertBindableObjectToKvp($object);
+	}
 
-			$value = null;
-			if($objectToExtract) {
-				$value = $closure($objectToExtract, $deepestKey);
-			}
-
-			if(is_null($value)) {
-				$kvp[$key] = null;
-			}
-			elseif(is_iterable($value)) {
-				$kvp[$key] = $value;
-			}
-			else {
-				$kvp[$key] = (string)$value;
-			}
+	/** @return array<string, null|string|array<int|string, mixed>> */
+	private function convertBindableObjectToKvp(object $object):array {
+		$kvp = [];
+		foreach($this->bindableClassMap[$object::class] as $key => $valueGetter) {
+			$targetObject = $this->resolveTargetObject($object, $key);
+			$value = $targetObject
+				? $valueGetter($targetObject)
+				: null;
+			$kvp[$key] = $this->normalizeValue($value);
 		}
 
 		return $kvp;
+	}
+
+	private function resolveTargetObject(object $object, string $key):?object {
+		$targetObject = $object;
+		$segments = explode(".", $key);
+		$segmentCount = count($segments);
+
+		while($segmentCount > 1 && $targetObject) {
+			$propertyName = array_shift($segments);
+			$targetObject = $this->readNestedObjectValue(
+				$targetObject,
+				$propertyName,
+			);
+			$segmentCount--;
+		}
+
+		return $targetObject;
+	}
+
+	private function readNestedObjectValue(
+		object $object,
+		string $propertyName,
+	):mixed {
+		if(property_exists($object, $propertyName)) {
+			$reflectionProperty = new RefProperty($object, $propertyName);
+			if(!$reflectionProperty->isPublic()) {
+				return null;
+			}
+
+			if(!$reflectionProperty->isInitialized($object)) {
+				return null;
+			}
+
+			return $object->$propertyName;
+		}
+
+		$getterName = "get" . ucfirst($propertyName);
+		if(method_exists($object, $getterName)) {
+			return $object->$getterName();
+		}
+
+		return null;
+	}
+
+	/**
+	 * @param array<string, mixed> $valueMap
+	 * @return array<string, null|string|array<int|string, mixed>>
+	 */
+	private function stringifyMap(array $valueMap):array {
+		$kvp = [];
+		foreach($valueMap as $key => $value) {
+			$kvp[$key] = $this->normalizeValue($value);
+		}
+
+		return $kvp;
+	}
+
+	/** @return null|string|array<int|string, mixed> */
+	private function normalizeValue(mixed $value):null|array|string {
+		if(is_null($value)) {
+			return null;
+		}
+
+		if(is_iterable($value)) {
+			return $value;
+		}
+
+		return (string)$value;
 	}
 
 	/** @return array<ReflectionAttribute<Bind|BindGetter>> */
@@ -244,7 +368,9 @@ class BindableCache {
 			$methodName = $refMethod->getName();
 			if(!str_starts_with($methodName, "get")) {
 				throw new BindGetterMethodDoesNotStartWithGetException(
-					"Method $methodName has the BindGetter Attribute, but its name doesn't start with \"get\". For help, see https://www.php.gt/domtemplate/bindgetter"
+					"Method $methodName has the BindGetter Attribute, "
+					. "but its name doesn't start with \"get\". "
+					. "For help, see https://www.php.gt/domtemplate/bindgetter"
 				);
 			}
 			return lcfirst(
@@ -256,7 +382,10 @@ class BindableCache {
 	}
 
 	/** @return null|string|array<int|string, mixed> */
-	private function nullableStringOrIterable(object $object, string $keyOrMethod):null|iterable|string {
+	private function nullableStringOrIterable(
+		object $object,
+		string $keyOrMethod,
+	):null|iterable|string {
 		if(method_exists($object, $keyOrMethod)) {
 			$value = $object->$keyOrMethod();
 		}

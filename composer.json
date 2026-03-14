@@ -3,13 +3,15 @@
 	"description": "Bind dynamic data to reusable HTML components.",
 	"license": "MIT",
 	"require": {
-		"php": ">=8.1",
+		"php": ">=8.2",
 		"ext-dom": "*",
 		"phpgt/dom": "^4.1.9"
 	},
 	"require-dev": {
-		"phpstan/phpstan": "^1.8",
-		"phpunit/phpunit": "^10.0"
+		"phpstan/phpstan": "^2.1",
+		"phpunit/phpunit": "^11.5",
+		"squizlabs/php_codesniffer": "^4.0",
+		"phpmd/phpmd": "^2.15"
 	},
 
 	"autoload": {
@@ -21,6 +23,20 @@
 		"psr-4": {
 			"Gt\\DomTemplate\\Test\\": "./test/phpunit"
 		}
+	},
+
+	"scripts": {
+		"phpunit": "vendor/bin/phpunit --configuration phpunit.xml",
+		"phpunit:coverage": "XDEBUG_MODE=coverage vendor/bin/phpunit --configuration phpunit.xml --coverage-text",
+		"phpstan": "vendor/bin/phpstan analyse --level 6 src --memory-limit 256M",
+		"phpcs": "vendor/bin/phpcs src --standard=phpcs.xml",
+		"phpmd": "vendor/bin/phpmd src/ text phpmd.xml",
+		"test": [
+			"@phpunit",
+			"@phpstan",
+			"@phpcs",
+			"@phpmd"
+		]
 	},
 
 	"funding": [

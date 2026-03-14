@@ -80,7 +80,7 @@ class PartialExpanderTest extends PartialContentTestCase {
 
 	public function testExpand_noExtendsSectionOfCommentIni():void {
 		$document = new HTMLDocument();
-		$partialContent = self::createMock(PartialContent::class);
+		$partialContent = self::createStub(PartialContent::class);
 
 		$sut = new PartialExpander($document, $partialContent);
 		self::assertEmpty($sut->expand());

@@ -158,4 +158,24 @@ class HTMLAttributeBinderTest extends TestCase {
 		self::assertSame("London", $fromInput->value);
 		self::assertSame("Derby", $toInput->value);
 	}
+
+	public function testExpandAttributes_atCharacterDefaultsToName():void {
+		$document = new HTMLDocument(
+			"<!doctype html><html><body><input name='email' data-bind:value='@' /></body></html>"
+		);
+		$input = $document->querySelector("input");
+		$sut = new HTMLAttributeBinder();
+		$sut->expandAttributes($input);
+		self::assertSame("email", $input->getAttribute("data-bind:value"));
+	}
+
+	public function testExpandAttributes_listUsesTagNameWhenNoHyphen():void {
+		$document = new HTMLDocument(
+			"<!doctype html><html><body><ul data-bind:list=''></ul></body></html>"
+		);
+		$list = $document->querySelector("ul");
+		$sut = new HTMLAttributeBinder();
+		$sut->expandAttributes($list);
+		self::assertSame("ul", $list->getAttribute("data-bind:list"));
+	}
 }
