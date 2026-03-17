@@ -505,6 +505,18 @@ HTML;
 </ul>
 HTML;
 
+	const HTML_CATS = <<<HTML
+<!doctype html>
+<h1>My favourite cats:</h1>
+<ul>
+	<li data-list data-bind:data-id="{{}}">
+		<p class="name">Name: <span data-bind:text="name">cat name</span></p>
+		<p class="colour">Colour: <span data-bind:text="colour">colour</span></p>	
+	</li>
+</ul>
+HTML;
+
+
 	const HTML_LANGUAGE = <<<HTML
 <!doctype html>
 <html data-bind:lang="language">

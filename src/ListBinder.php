@@ -229,6 +229,9 @@ class ListBinder {
 	}
 
 	private function isNested(mixed $item):bool {
+		if(empty($item)) {
+			return false;
+		}
 		if(is_array($item)) {
 			$key = array_key_first($item);
 			return is_int($key) || (isset($item[$key]) && is_iterable($item[$key]));

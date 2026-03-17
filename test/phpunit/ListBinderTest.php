@@ -22,6 +22,9 @@ use Gt\DomTemplate\ListElementCollection;
 use Gt\DomTemplate\ListElement;
 use Gt\DomTemplate\Test\TestHelper\HTMLPageContent;
 use Gt\DomTemplate\Test\TestHelper\Model\IteratorAggregate\Music\MusicFactory;
+use Gt\DomTemplate\Test\TestHelper\Model\IteratorAggregate\Student\Module as IteratorAggregateModule;
+use Gt\DomTemplate\Test\TestHelper\Model\IteratorAggregate\Student\Name as IteratorAggregateName;
+use Gt\DomTemplate\Test\TestHelper\Model\IteratorAggregate\Student\Student as IteratorAggregateStudent;
 use Gt\DomTemplate\Test\TestHelper\Model\IteratorAggregate\Student\StudentFactory;
 use Gt\DomTemplate\Test\TestHelper\Model\Student;
 use Gt\DomTemplate\Test\TestHelper\TestData;
@@ -125,6 +128,69 @@ class ListBinderTest extends TestCase {
 
 		foreach($testData as $i => $value) {
 			self::assertSame($value, $ul->children[$i]->textContent);
+		}
+	}
+
+	public function testBindList_sparseIndexedScalarList():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_LIST_ASSOCIATIVE_SCALAR_WITH_KEY_BIND);
+		$listData = [
+			0 => "zero",
+			2 => "two",
+			5 => "five",
+		];
+		$sut = new ListBinder();
+		$sut->setDependencies(...$this->listBinderDependencies($document));
+		$boundCount = $sut->bindListData($listData, $document);
+
+		self::assertSame(count($listData), $boundCount);
+		foreach($document->querySelectorAll("ul li") as $i => $li) {
+			$key = array_keys($listData)[$i];
+			self::assertSame((string)$key, $li->querySelector(".list-key")->textContent);
+			self::assertSame($listData[$key], $li->querySelector(".list-value")->textContent);
+		}
+	}
+
+	public function testBindList_filteredBindableObjectsWithoutZeroIndex():void {
+		$listData = [
+			new Student("A", "One", []),
+			new Student("B", "Two", []),
+		];
+		$filteredList = array_filter(
+			$listData,
+			fn(Student $student):bool => $student->firstName === "B",
+		);
+		$document = new HTMLDocument(HTMLPageContent::HTML_STUDENT_LIST_NO_MODULE_LIST);
+		$sut = new ListBinder();
+		$sut->setDependencies(...$this->listBinderDependencies($document));
+		$boundCount = $sut->bindListData($filteredList, $document);
+
+		self::assertSame([1], array_keys($filteredList));
+		self::assertSame(1, $boundCount);
+		self::assertSame("B Two", trim($document->querySelector("dd.name")->textContent));
+	}
+
+	public function testBindListData_filteredList():void {
+		$listData = [
+			"CAT1" => ["name" => "Cody", "colour" => "orange"],
+			"CAT2" => ["name" => "Scarlett", "colour" => "tabby"],
+			"CAT3" => ["name" => "Sonic", "colour" => "grey"],
+		];
+		$filteredListData = array_filter($listData, fn($item) => $item["colour"] !== "tabby");
+		$document = new HTMLDocument(HTMLPageContent::HTML_CATS);
+		$sut = new ListBinder();
+		$sut->setDependencies(...$this->listBinderDependencies($document));
+
+		$boundCount = $sut->bindListData($filteredListData, $document);
+		self::assertSame(2, $boundCount);
+
+		$filteredKeys = array_keys($filteredListData);
+		foreach($document->querySelectorAll("li") as $i => $li) {
+			$id = $li->dataset->get("id");
+			$catName = $li->querySelector("p.name span")->textContent;
+			$catColour = $li->querySelector("p.colour span")->textContent;
+			self::assertSame($filteredKeys[$i], $id);
+			self::assertSame($filteredListData[$filteredKeys[$i]]["name"], $catName);
+			self::assertSame($filteredListData[$filteredKeys[$i]]["colour"], $catColour);
 		}
 	}
 
