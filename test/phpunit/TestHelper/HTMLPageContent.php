@@ -799,6 +799,16 @@ Oh yeah!
 	Some useful links can be put here.
 </aside>
 HTML;
+
+	const HTML_COMMENT_WITH_MALFORMED_INI_DATA_PARTIAL_VIEW = <<<HTML
+<!--
+something: broken
+-->
+<article>
+	<h1>Hello from within a sub-template!</h1>
+</article>
+HTML;
+
 	const HTML_COMPONENT = <<<HTML
 <!doctype html>
 <h1>Component test</h1>
