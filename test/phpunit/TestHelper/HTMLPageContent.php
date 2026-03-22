@@ -1232,15 +1232,15 @@ HTML;
 <form>
 	<label>
 		<input type="radio" name="size" id="size-s" value="s" data-bind:checked="?size=s" data-rebind />
-		Small
+		<span>Small</span>
 	</label>
 	<label>
 		<input type="radio" name="size" id="size-m" value="m" data-bind:checked="?size=m" data-rebind />
-		Medium
+		<span>Medium</span>
 	</label>
 	<label>
 		<input type="radio" name="size" id="size-l" value="l" data-bind:checked="?size=l" data-rebind />
-		Large
+		<span>Large</span>
 	</label>
 </form>
 HTML;
