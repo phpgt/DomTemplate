@@ -1245,6 +1245,24 @@ HTML;
 </form>
 HTML;
 
+	const HTML_RADIO_GROUP_CONDITIONAL_CHECKED_ATTRIBUTE_MODIFIER = <<<HTML
+<!doctype html>
+<form>
+	<label>
+		<input type="radio" name="size" id="size-s" value="s" data-bind:checked="?@name=@value" data-rebind />
+		<span>Small</span>
+	</label>
+	<label>
+		<input type="radio" name="size" id="size-m" value="m" data-bind:checked="?@name=@value" data-rebind />
+		<span>Medium</span>
+	</label>
+	<label>
+		<input type="radio" name="size" id="size-l" value="l" data-bind:checked="?@name=@value" data-rebind />
+		<span>Large</span>
+	</label>
+</form>
+HTML;
+
 	public static function createHTML(string $html = ""):HTMLDocument {
 		return new HTMLDocument($html);
 	}

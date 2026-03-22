@@ -145,6 +145,39 @@ class HTMLAttributeBinderTest extends TestCase {
 		self::assertFalse($document->getElementById("size-l")->checked);
 	}
 
+	public function testBind_modifierQuestion_withConditionalMatch_attributeModifier():void {
+		$document = new HTMLDocument(
+			HTMLPageContent::HTML_RADIO_GROUP_CONDITIONAL_CHECKED_ATTRIBUTE_MODIFIER
+		);
+		$sut = new HTMLAttributeBinder();
+
+		foreach($document->querySelectorAll("input[type=radio]") as $radio) {
+			$sut->expandAttributes($radio);
+			$sut->bind("size", "m", $radio);
+		}
+
+		self::assertFalse($document->getElementById("size-s")->checked);
+		self::assertTrue($document->getElementById("size-m")->checked);
+		self::assertFalse($document->getElementById("size-l")->checked);
+	}
+
+	public function testBind_modifierQuestion_withConditionalNoMatch_attributeModifier():void {
+		$document = new HTMLDocument(
+			HTMLPageContent::HTML_RADIO_GROUP_CONDITIONAL_CHECKED_ATTRIBUTE_MODIFIER
+		);
+		$sut = new HTMLAttributeBinder();
+		$document->getElementById("size-s")->checked = true;
+
+		foreach($document->querySelectorAll("input[type=radio]") as $radio) {
+			$sut->expandAttributes($radio);
+			$sut->bind("size", "xl", $radio);
+		}
+
+		self::assertFalse($document->getElementById("size-s")->checked);
+		self::assertFalse($document->getElementById("size-m")->checked);
+		self::assertFalse($document->getElementById("size-l")->checked);
+	}
+
 	public function testBind_dateTimeInterface():void {
 		$dateTime = new DateTime("1988-04-05 17:23:00");
 

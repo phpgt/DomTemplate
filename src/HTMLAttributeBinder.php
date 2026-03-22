@@ -83,15 +83,10 @@ class HTMLAttributeBinder {
 				continue;
 			}
 
-			if($attrValue[0] === "@") {
-				$otherAttrName = $attrValue === "@"
-					? "name"
-					: substr($attrValue, 1);
-				$element->setAttribute(
-					$attrName,
-					$element->getAttribute($otherAttrName)
-				);
-			}
+			$element->setAttribute(
+				$attrName,
+				$this->expandAttributeReferences($element, $attrValue)
+			);
 		}
 	}
 
@@ -378,6 +373,20 @@ class HTMLAttributeBinder {
 		return new MutableDomTokenList(
 			fn() => explode(" ", $node->getAttribute($attribute) ?? ""),
 			fn(string...$tokens) => $node->setAttribute($attribute, implode(" ", $tokens)),
+		);
+	}
+
+	private function expandAttributeReferences(Element $element, string $attributeValue):string {
+		return preg_replace_callback(
+			'/@([a-zA-Z0-9:-]+)?/',
+			function(array $matches)use($element):string {
+				$otherAttrName = $matches[1] ?? null;
+				if(!$otherAttrName) {
+					$otherAttrName = "name";
+				}
+				return $element->getAttribute($otherAttrName);
+			},
+			$attributeValue,
 		);
 	}
 
