@@ -6,6 +6,15 @@ use Gt\Dom\Element;
 use Gt\Dom\ElementType;
 use Traversable;
 
+/**
+ * @phpstan-type TableRow array<int, string>
+ * @phpstan-type DoubleHeaderRow array<string, array<int, string>>
+ * @phpstan-type NormalisedTableData array<int, TableRow|DoubleHeaderRow>
+ * @phpstan-type BindTableDataInput array<int, TableRow|array<int|string, string|array<int, mixed>>>
+ * @phpstan-type IndexedTableIterable iterable<int, iterable<int, string>|iterable<string, string>>
+ * @phpstan-type HeaderValueIterable iterable<string, iterable<int, string>>
+ * @phpstan-type BindTableIterable IndexedTableIterable|HeaderValueIterable
+ */
 class TableBinder {
 	private ListBinder $listBinder;
 	private ListElementCollection $templateCollection;
@@ -31,8 +40,7 @@ class TableBinder {
 	}
 
 	/**
-	 * @param array<int, array<int, string>>
-	 * |array<int, array<int|string, string|array<int, mixed>>> $tableData
+	 * @param BindTableDataInput $tableData
 	 * @param Element $context
 	 */
 	public function bindTableData(
@@ -99,8 +107,8 @@ class TableBinder {
 
 	/**
 	 * @param array<int, string> $headerRow
-	 * @param array<int, array<int, string>>|array<int, array<string,array<int, string>>> $tableData
-	 * @param array<int, string>|array<string, array<int, string>> $rowData
+	 * @param NormalisedTableData $tableData
+	 * @param TableRow|DoubleHeaderRow $rowData
 	 */
 	private function bindRowData(
 		Element $table,
@@ -165,7 +173,7 @@ class TableBinder {
 	/**
 	 * @param array<int, string> $headerRow
 	 * @param array<int, string> $allowedHeaders
-	 * @param array<int, string>|array<string, array<int, string>> $rowData
+	 * @param TableRow|DoubleHeaderRow $rowData
 	 */
 	private function populateTableCells(
 		Element $tableRow,
@@ -193,7 +201,7 @@ class TableBinder {
 	}
 
 	/**
-	 * @param array<int, string>|array<string, array<int, string>> $rowData
+	 * @param TableRow|DoubleHeaderRow $rowData
 	 * @return array{0:?string,1:string}
 	 */
 	private function resolveColumnValue(array $rowData, int|false $rowIndex):array {
@@ -380,14 +388,11 @@ class TableBinder {
 		return true;
 	}
 
-		/**
-		 * @param iterable<int,iterable<int,string>>
-		 * |iterable<int,iterable<string,string>>
-		 * |iterable<string,iterable<int,string>>
-		 * |iterable<int, iterable<int,string>|iterable<string,string>> $bindValue
-	 * The structures allowed by this method are:
-	 *
-	 * 1) iterable<int, iterable<int,string>> If $bindValue has keys of type
+	/**
+	 * @param BindTableIterable $bindValue
+		 * The structures allowed by this method are:
+		 *
+		 * 1) iterable<int, iterable<int,string>> If $bindValue has keys of type
 	 * int, and the value of index 0 is an iterable of strings, then the
 	 * value of index 0 must represent the columnHeaders; subsequent values
 	 * must represent the columnValues.
@@ -406,13 +411,13 @@ class TableBinder {
 	 * type string, the keys must represent the columnHeaders and the values
 	 * must represent the columnValues.
 	 *
-	 * @return array<int, array<int, string>|array<string,array<int,string>>>
-	 * A two-dimensional array where the outer array represents the rows,
-	 * the inner array represents the columns. The first index's value is
-	 * always the columnHeaders. The other index's values are always the
-	 * columnValues. Typically, columnValues will be array<int,string> apart
-	 * from when the data represents double-header tables, in which case the
-	 * columnValues will be within array<string,array<int,string>>.
+	 * @return NormalisedTableData A two-dimensional array where the outer
+	 * array represents the rows, the inner array represents the columns.
+	 * The first index's value is always the columnHeaders. The other index's
+	 * values are always the columnValues. Typically, columnValues will be
+	 * `array<int,string>` apart from when the data represents double-header
+	 * tables, in which case the columnValues will be within
+	 * `array<string,array<int,string>>`.
 	 */
 	private function normaliseTableData(iterable $bindValue):array {
 		if($bindValue instanceof Traversable) {

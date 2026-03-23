@@ -27,6 +27,14 @@ class CommentIniTest extends TestCase {
 		self::assertFalse($sut->containsIniData());
 	}
 
+	public function testContainsIniData_emptyIfMalformedIniSyntax():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_COMMENT_WITH_MALFORMED_INI_DATA_PARTIAL_VIEW);
+		$sut = new CommentIni($document);
+		self::assertFalse($sut->containsIniData());
+		self::assertNull($sut->get("extends"));
+		self::assertStringContainsString("something: broken", $document->saveHTML());
+	}
+
 	public function testGet_noMatchingData():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_EXTENDS_PARTIAL_VIEW);
 		$sut = new CommentIni($document);
