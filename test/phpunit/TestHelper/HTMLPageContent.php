@@ -1237,6 +1237,42 @@ HTML;
 <p id="day-or-night">Is it day or night? <span data-bind:remove="?isDay">It's nighttime!</span><span data-bind:remove="?!isDay">It's daytime!</span></p>
 HTML;
 
+	const HTML_RADIO_GROUP_CONDITIONAL_CHECKED = <<<HTML
+<!doctype html>
+<form>
+	<label>
+		<input type="radio" name="size" id="size-s" value="s" data-bind:checked="?size=s" data-rebind />
+		<span>Small</span>
+	</label>
+	<label>
+		<input type="radio" name="size" id="size-m" value="m" data-bind:checked="?size=m" data-rebind />
+		<span>Medium</span>
+	</label>
+	<label>
+		<input type="radio" name="size" id="size-l" value="l" data-bind:checked="?size=l" data-rebind />
+		<span>Large</span>
+	</label>
+</form>
+HTML;
+
+	const HTML_RADIO_GROUP_CONDITIONAL_CHECKED_ATTRIBUTE_MODIFIER = <<<HTML
+<!doctype html>
+<form>
+	<label>
+		<input type="radio" name="size" id="size-s" value="s" data-bind:checked="?@name=@value" data-rebind />
+		<span>Small</span>
+	</label>
+	<label>
+		<input type="radio" name="size" id="size-m" value="m" data-bind:checked="?@name=@value" data-rebind />
+		<span>Medium</span>
+	</label>
+	<label>
+		<input type="radio" name="size" id="size-l" value="l" data-bind:checked="?@name=@value" data-rebind />
+		<span>Large</span>
+	</label>
+</form>
+HTML;
+
 	public static function createHTML(string $html = ""):HTMLDocument {
 		return new HTMLDocument($html);
 	}

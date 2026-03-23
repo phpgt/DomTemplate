@@ -83,15 +83,10 @@ class HTMLAttributeBinder {
 				continue;
 			}
 
-			if($attrValue[0] === "@") {
-				$otherAttrName = $attrValue === "@"
-					? "name"
-					: substr($attrValue, 1);
-				$element->setAttribute(
-					$attrName,
-					$element->getAttribute($otherAttrName)
-				);
-			}
+			$element->setAttribute(
+				$attrName,
+				$this->expandAttributeReferences($element, $attrValue)
+			);
 		}
 	}
 
@@ -147,7 +142,8 @@ class HTMLAttributeBinder {
 
 		$trimmedAttrValue = ltrim($attributeValue, ":!?");
 		$trimmedAttrValue = strtok($trimmedAttrValue, " ");
-		if($key !== $trimmedAttrValue && $trimmedAttrValue !== "@") {
+		$bindKey = $this->extractBindKey($trimmedAttrValue);
+		if($key !== $bindKey && $bindKey !== "@") {
 			return false;
 		}
 
@@ -330,8 +326,17 @@ class HTMLAttributeBinder {
 	):void {
 		$modifierChar = $modifier[0];
 		$modifierValue = substr($modifier, 1);
+		$condition = null;
 		if(false !== $spacePos = strpos($modifierValue, " ")) {
 			$modifierValue = substr($modifierValue, $spacePos + 1);
+		}
+
+		if($expression = $this->extractModifierExpression($modifier)) {
+			$condition = $this->extractCondition($expression);
+		}
+
+		if(!is_null($condition)) {
+			$bindValue = $this->valueMatchesCondition($bindValue, $condition);
 		}
 
 		switch($modifierChar) {
@@ -369,5 +374,47 @@ class HTMLAttributeBinder {
 			fn() => explode(" ", $node->getAttribute($attribute) ?? ""),
 			fn(string...$tokens) => $node->setAttribute($attribute, implode(" ", $tokens)),
 		);
+	}
+
+	private function expandAttributeReferences(Element $element, string $attributeValue):string {
+		return preg_replace_callback(
+			'/@([a-zA-Z0-9:-]+)?/',
+			function(array $matches)use($element):string {
+				$otherAttrName = $matches[1] ?? null;
+				if(!$otherAttrName) {
+					$otherAttrName = "name";
+				}
+				return $element->getAttribute($otherAttrName);
+			},
+			$attributeValue,
+		);
+	}
+
+	private function extractBindKey(string $bindExpression):string {
+		[$bindKey] = explode("=", $bindExpression, 2);
+		return $bindKey;
+	}
+
+	private function extractModifierExpression(string $modifier):string {
+		$modifierValue = substr($modifier, 1);
+		$modifierValue = ltrim($modifierValue, "!");
+		return strtok($modifierValue, " ") ?: "";
+	}
+
+	private function extractCondition(string $bindExpression):?string {
+		$parts = explode("=", $bindExpression, 2);
+		return $parts[1] ?? null;
+	}
+
+	private function valueMatchesCondition(mixed $bindValue, string $condition):bool {
+		if(is_bool($bindValue)) {
+			$bindValue = (int)$bindValue;
+		}
+
+		if(is_scalar($bindValue) || $bindValue instanceof \Stringable) {
+			return (string)$bindValue === $condition;
+		}
+
+		return false;
 	}
 }

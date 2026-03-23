@@ -474,6 +474,20 @@ class DocumentBinderTest extends TestCase {
 		self::assertFalse($button->disabled);
 	}
 
+	public function testBindData_toggleChecked_withConditionalMatch():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_RADIO_GROUP_CONDITIONAL_CHECKED);
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+
+		$sut->bindData([
+			"size" => "m",
+		]);
+
+		self::assertFalse($document->getElementById("size-s")->checked);
+		self::assertTrue($document->getElementById("size-m")->checked);
+		self::assertFalse($document->getElementById("size-l")->checked);
+	}
+
 	public function testBindKeyValue_tableData_noTable():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_NO_TABLE);
 		$sut = new DocumentBinder($document);
