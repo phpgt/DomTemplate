@@ -994,6 +994,81 @@ class DocumentBinderTest extends TestCase {
 		}
 	}
 
+	public function testBindListData_callbackReturnsNull_bindsOriginalKvp():void {
+		$salesData = [
+			[
+				"name" => "Cactus",
+				"count" => 14,
+				"price" => 5.50,
+				"cost" => 3.55,
+			],
+			[
+				"name" => "Succulent",
+				"count" => 9,
+				"price" => 3.50,
+				"cost" => 2.10,
+			]
+		];
+
+		$document = new HTMLDocument(HTMLPageContent::HTML_SALES);
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+		$sut->bindListCallback(
+			$salesData,
+			function(Element $template, array $listItem, int|string $key):null {
+				return null;
+			}
+		);
+
+		$salesLiList = $document->querySelectorAll("ul>li");
+		self::assertCount(count($salesData), $salesLiList);
+		foreach($salesData as $i => $sale) {
+			$li = $salesLiList[$i];
+			self::assertSame($sale["name"], $li->querySelector(".name span")->textContent);
+			self::assertSame((string)$sale["count"], $li->querySelector(".count span")->textContent);
+			self::assertSame((string)$sale["price"], $li->querySelector(".price span")->textContent);
+			self::assertSame((string)$sale["cost"], $li->querySelector(".cost span")->textContent);
+			self::assertSame("0.00", $li->querySelector(".profit span")->textContent);
+		}
+	}
+
+	public function testBindListData_callbackWithNoReturn_bindsOriginalKvp():void {
+		$salesData = [
+			[
+				"name" => "Cactus",
+				"count" => 14,
+				"price" => 5.50,
+				"cost" => 3.55,
+			],
+			[
+				"name" => "Succulent",
+				"count" => 9,
+				"price" => 3.50,
+				"cost" => 2.10,
+			]
+		];
+
+		$document = new HTMLDocument(HTMLPageContent::HTML_SALES);
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+		$sut->bindListCallback(
+			$salesData,
+			function(Element $template, array $listItem, int|string $key):void {
+			}
+		);
+
+		$salesLiList = $document->querySelectorAll("ul>li");
+		self::assertCount(count($salesData), $salesLiList);
+		foreach($salesData as $i => $sale) {
+			$li = $salesLiList[$i];
+			self::assertSame($sale["name"], $li->querySelector(".name span")->textContent);
+			self::assertSame((string)$sale["count"], $li->querySelector(".count span")->textContent);
+			self::assertSame((string)$sale["price"], $li->querySelector(".price span")->textContent);
+			self::assertSame((string)$sale["cost"], $li->querySelector(".cost span")->textContent);
+			self::assertSame("0.00", $li->querySelector(".profit span")->textContent);
+		}
+	}
+
 	public function testCleanDatasets_dataBind():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_USER_PROFILE);
 		$sut = new DocumentBinder($document);
