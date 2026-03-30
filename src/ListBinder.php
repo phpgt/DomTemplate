@@ -108,7 +108,10 @@ class ListBinder {
 
 		$listValue = $this->normalizeListValue($listValue);
 		if($callback) {
-			$listValue = $callback($template, $listValue, $listKey);
+			$callbackValue = $callback($template, $listValue, $listKey);
+			if(!is_null($callbackValue)) {
+				$listValue = $callbackValue;
+			}
 		}
 
 		if(is_null($listValue)) {
