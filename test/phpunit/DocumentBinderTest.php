@@ -1688,6 +1688,28 @@ class DocumentBinderTest extends TestCase {
 		$sut->bindValue("3");
 	}
 
+	public function testBindData_boolean():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_SIMPLE_BOOLEAN);
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+		$sut->bindData(new class {
+			#[BindGetter]
+			public function getCanAccept():bool {
+				return false;
+			}
+
+			#[BindGetter]
+			public function getCanReject():bool {
+				return true;
+			}
+		});
+
+		$buttonAccept = $document->querySelector("button[value='accept']");
+		$buttonReject = $document->querySelector("button[value='reject']");
+		self::assertFalse($buttonAccept->hasAttribute("disabled"));
+		self::assertTrue($buttonReject->hasAttribute("disabled"));
+	}
+
 	private function documentBinderDependencies(HTMLDocument $document, mixed...$otherObjectList):array {
 		$htmlAttributeBinder = new HTMLAttributeBinder();
 		$htmlAttributeCollection = new HTMLAttributeCollection();

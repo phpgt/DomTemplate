@@ -115,6 +115,16 @@ HTML;
 </form>
 HTML;
 
+	const HTML_SIMPLE_BOOLEAN = <<<HTML
+<!doctype html>
+
+<form method="post">
+	<button name="do" value="accept" data-bind:disabled="?canAccept">Accept</button>
+	<button name="do" value="reject" data-bind:disabled="?canReject">Reject</button>
+</form>
+HTML;
+
+
 	const HTML_TABLES = <<<HTML
 <!doctype html>
 <table id="tbl0" data-bind:table="matchingTableBindKey"></table>
