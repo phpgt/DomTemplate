@@ -49,7 +49,7 @@ class TableBinder {
 	 * @param Element $context
 	 */
 	public function bindTableData(
-		array $tableData,
+		iterable $tableData,
 		Document|Element $context,
 		?string $bindKey = null
 	):void {
@@ -568,11 +568,11 @@ class TableBinder {
 
 		$entry = $bindProperty . "=" . $this->debugSource;
 		$current = trim($element->getAttribute("data-bind-debug") ?? "");
-		if($current === "") {
-			$element->setAttribute("data-bind-debug", $entry);
-			return;
-		}
-
-		$element->setAttribute("data-bind-debug", $current . "," . $entry);
+		$element->setAttribute(
+			"data-bind-debug",
+			$current === ""
+				? $entry
+				: $current . "," . $entry
+		);
 	}
 }

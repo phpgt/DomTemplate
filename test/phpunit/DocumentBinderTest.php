@@ -165,9 +165,7 @@ class DocumentBinderTest extends TestCase {
 	}
 
 	public function testBindKeyValue_dataBindDebugOnElement():void {
-		$document = new HTMLDocument(
-			"<!doctype html><p data-bind:text='name' data-bind-debug>Test</p>"
-		);
+		$document = new HTMLDocument(HTMLPageContent::HTML_BIND_DEBUG_SINGLE_NAME);
 		$sut = new DocumentBinder($document);
 		$sut->setDependencies(...$this->documentBinderDependencies($document));
 
@@ -178,17 +176,36 @@ class DocumentBinderTest extends TestCase {
 		self::assertSame("text=$expectedDebug", $paragraph->getAttribute("data-bind-debug"));
 	}
 
+	public function testBindKeyValue_dataBindDebugOutsideProjectUsesAbsolutePath():void {
+		$tempFile = tempnam(sys_get_temp_dir(), "domtemplate-debug-");
+		file_put_contents($tempFile, <<<'PHP'
+		<?php
+		return function(\Gt\DomTemplate\DocumentBinder $binder): void {
+			$binder->bindKeyValue("name", "Cody");
+		};
+		PHP);
+
+		try {
+			$document = new HTMLDocument(HTMLPageContent::HTML_BIND_DEBUG_SINGLE_NAME);
+			$sut = new DocumentBinder($document);
+			$sut->setDependencies(...$this->documentBinderDependencies($document));
+
+			$callback = require $tempFile;
+			$callback($sut);
+
+			$debugAttribute = $document->querySelector("p")->getAttribute("data-bind-debug");
+			self::assertMatchesRegularExpression(
+				"/^text=" . preg_quote(str_replace("\\", "/", $tempFile), "/") . ":\d+$/",
+				$debugAttribute
+			);
+		}
+		finally {
+			unlink($tempFile);
+		}
+	}
+
 	public function testBindData_dataBindDebugInheritedByDescendants():void {
-		$document = new HTMLDocument(<<<HTML
-<!doctype html>
-<section id="profile" data-bind-debug>
-	<h1 data-bind:text="username">Guest</h1>
-	<p>Contact: <a data-bind:href="emailLink" data-bind:text="email">guest@example.com</a></p>
-</section>
-<aside>
-	<span data-bind:text="username">Outside</span>
-</aside>
-HTML);
+		$document = new HTMLDocument(HTMLPageContent::HTML_BIND_DEBUG_PROFILE);
 		$sut = new DocumentBinder($document);
 		$sut->setDependencies(...$this->documentBinderDependencies($document));
 
@@ -587,12 +604,7 @@ HTML);
 	}
 
 	public function testBindTable_dataBindDebug():void {
-		$document = new HTMLDocument(<<<HTML
-<!doctype html>
-<section data-bind-debug>
-	<table data-bind:table="tableData"></table>
-</section>
-HTML);
+		$document = new HTMLDocument(HTMLPageContent::HTML_BIND_DEBUG_TABLE);
 		$sut = new DocumentBinder($document);
 		$sut->setDependencies(...$this->documentBinderDependencies($document));
 
@@ -1155,13 +1167,7 @@ HTML);
 	}
 
 	public function testCleanDatasets_dataBindDebugKeepsBoundMetadataAndRemovesEmptyMarkers():void {
-		$document = new HTMLDocument(<<<HTML
-<!doctype html>
-<section id="profile" data-bind-debug>
-	<h1 data-bind:text="username">Guest</h1>
-	<p data-bind:text="email">guest@example.com</p>
-</section>
-HTML);
+		$document = new HTMLDocument(HTMLPageContent::HTML_BIND_DEBUG_PROFILE_CLEANUP);
 		$sut = new DocumentBinder($document);
 		$sut->setDependencies(...$this->documentBinderDependencies($document));
 
@@ -1179,14 +1185,7 @@ HTML);
 	}
 
 	public function testBindList_dataBindDebug():void {
-		$document = new HTMLDocument(<<<HTML
-<!doctype html>
-<section data-bind-debug>
-	<ul>
-		<li data-list data-bind:text>Template</li>
-	</ul>
-</section>
-HTML);
+		$document = new HTMLDocument(HTMLPageContent::HTML_BIND_DEBUG_LIST);
 		$sut = new DocumentBinder($document);
 		$sut->setDependencies(...$this->documentBinderDependencies($document));
 

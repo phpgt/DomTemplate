@@ -145,6 +145,27 @@ class HTMLAttributeBinderTest extends TestCase {
 		self::assertFalse($document->getElementById("size-l")->checked);
 	}
 
+	public function testBind_modifierQuestion_withConditionalBooleanMatch():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_CONDITIONAL_BOOLEAN_CHECKBOX);
+		$sut = new HTMLAttributeBinder();
+		$input = $document->getElementById("flag");
+		$input->checked = false;
+
+		$sut->bind("enabled", true, $input);
+
+		self::assertTrue($input->checked);
+	}
+
+	public function testBind_modifierQuestion_withConditionalIterableDoesNotMatch():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_CONDITIONAL_BOOLEAN_CHECKBOX);
+		$sut = new HTMLAttributeBinder();
+		$input = $document->getElementById("flag");
+
+		$sut->bind("enabled", ["1"], $input);
+
+		self::assertFalse($input->checked);
+	}
+
 	public function testBind_modifierQuestion_withConditionalMatch_attributeModifier():void {
 		$document = new HTMLDocument(
 			HTMLPageContent::HTML_RADIO_GROUP_CONDITIONAL_CHECKED_ATTRIBUTE_MODIFIER
@@ -208,9 +229,7 @@ class HTMLAttributeBinderTest extends TestCase {
 	}
 
 	public function testBind_multipleAttributes_withDebug():void {
-		$document = new HTMLDocument(
-			"<!doctype html><section data-bind-debug><output data-bind:data-attr1='key1' data-bind:data-attr2='key2'>Nothing is bound</output></section>"
-		);
+		$document = new HTMLDocument(HTMLPageContent::HTML_ATTRIBUTE_BIND_DEBUG);
 		$outputElement = $document->querySelector("output");
 		$sut = new HTMLAttributeBinder();
 		$sut->setDebugSource("app/ProfileController.php:42");
@@ -236,9 +255,7 @@ class HTMLAttributeBinderTest extends TestCase {
 	}
 
 	public function testExpandAttributes_atCharacterDefaultsToName():void {
-		$document = new HTMLDocument(
-			"<!doctype html><html><body><input name='email' data-bind:value='@' /></body></html>"
-		);
+		$document = new HTMLDocument(HTMLPageContent::HTML_INPUT_VALUE_AT_DEFAULT_NAME);
 		$input = $document->querySelector("input");
 		$sut = new HTMLAttributeBinder();
 		$sut->expandAttributes($input);
@@ -246,9 +263,7 @@ class HTMLAttributeBinderTest extends TestCase {
 	}
 
 	public function testExpandAttributes_listUsesTagNameWhenNoHyphen():void {
-		$document = new HTMLDocument(
-			"<!doctype html><html><body><ul data-bind:list=''></ul></body></html>"
-		);
+		$document = new HTMLDocument(HTMLPageContent::HTML_LIST_BIND_EMPTY_NAME);
 		$list = $document->querySelector("ul");
 		$sut = new HTMLAttributeBinder();
 		$sut->expandAttributes($list);

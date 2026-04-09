@@ -91,6 +91,77 @@ HTML;
 </div>
 HTML;
 
+	const HTML_EMPTY_COMPONENT = <<<HTML
+<!doctype html><html><body><empty-component /></body></html>
+HTML;
+
+	const HTML_LIST_ELEMENT_COLLECTION_CONTEXT = <<<HTML
+<!doctype html><html><body><div id="example" class="one two"></div></body></html>
+HTML;
+
+	const HTML_TABLE_ANCESTOR_BIND_KEY = <<<HTML
+<!doctype html><div data-bind:table="tableData"><table id="tbl"></table></div>
+HTML;
+
+	const HTML_CONDITIONAL_BOOLEAN_CHECKBOX = <<<HTML
+<!doctype html><html><body><input id="flag" type="checkbox" data-bind:checked="?enabled=1" checked /></body></html>
+HTML;
+
+	const HTML_ATTRIBUTE_BIND_DEBUG = <<<HTML
+<!doctype html><section data-bind-debug><output data-bind:data-attr1="key1" data-bind:data-attr2="key2">Nothing is bound</output></section>
+HTML;
+
+	const HTML_INPUT_VALUE_AT_DEFAULT_NAME = <<<HTML
+<!doctype html><html><body><input name="email" data-bind:value="@" /></body></html>
+HTML;
+
+	const HTML_LIST_BIND_EMPTY_NAME = <<<HTML
+<!doctype html><html><body><ul data-bind:list=""></ul></body></html>
+HTML;
+
+	const HTML_BIND_DEBUG_SINGLE_NAME = <<<HTML
+<!doctype html><p data-bind:text="name" data-bind-debug>Test</p>
+HTML;
+
+	const HTML_BIND_DEBUG_PROFILE = <<<HTML
+<!doctype html>
+<section id="profile" data-bind-debug>
+	<h1 data-bind:text="username">Guest</h1>
+	<p>Contact: <a data-bind:href="emailLink" data-bind:text="email">guest@example.com</a></p>
+</section>
+<aside>
+	<span data-bind:text="username">Outside</span>
+</aside>
+HTML;
+
+	const HTML_BIND_DEBUG_PROFILE_CLEANUP = <<<HTML
+<!doctype html>
+<section id="profile" data-bind-debug>
+	<h1 data-bind:text="username">Guest</h1>
+	<p data-bind:text="email">guest@example.com</p>
+</section>
+HTML;
+
+	const HTML_BIND_DEBUG_LIST = <<<HTML
+<!doctype html>
+<section data-bind-debug>
+	<ul>
+		<li data-list data-bind:text>Template</li>
+	</ul>
+</section>
+HTML;
+
+	const HTML_BIND_DEBUG_TABLE = <<<HTML
+<!doctype html>
+<section data-bind-debug>
+	<table data-bind:table="tableData"></table>
+</section>
+HTML;
+
+	const HTML_BIND_DEBUG_GENERATED_TABLE = <<<HTML
+<!doctype html><section data-bind-debug><table id="tbl" data-bind:table="tableData"></table></section>
+HTML;
+
 
 	const HTML_DIFFERENT_BIND_PROPERTIES = <<<HTML
 <!doctype html>
