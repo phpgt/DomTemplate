@@ -99,10 +99,23 @@ class TableBinder {
 	private function tableMatchesBindKey(Element $table, ?string $bindKey):bool {
 		$dataBindTableElement = $table;
 		if(!$dataBindTableElement->hasAttribute("data-bind:table")) {
-			$dataBindTableElement = $table->closest("[data-bind:table]") ?? $table;
+			$dataBindTableElement = $this->findTableBindingAncestor($table) ?? $table;
 		}
 
 		return $dataBindTableElement->getAttribute("data-bind:table") == $bindKey;
+	}
+
+	private function findTableBindingAncestor(Element $element):?Element {
+		$parent = $element->parentElement;
+		while($parent) {
+			if($parent->hasAttribute("data-bind:table")) {
+				return $parent;
+			}
+
+			$parent = $parent->parentElement;
+		}
+
+		return null;
 	}
 
 	/**

@@ -207,6 +207,22 @@ class HTMLAttributeBinderTest extends TestCase {
 		self::assertSame("value2", $outputElement->dataset->get("attr2"));
 	}
 
+	public function testBind_multipleAttributes_withDebug():void {
+		$document = new HTMLDocument(
+			"<!doctype html><section data-bind-debug><output data-bind:data-attr1='key1' data-bind:data-attr2='key2'>Nothing is bound</output></section>"
+		);
+		$outputElement = $document->querySelector("output");
+		$sut = new HTMLAttributeBinder();
+		$sut->setDebugSource("app/ProfileController.php:42");
+		$sut->bind("key1", "value1", $outputElement);
+		$sut->bind("key2", "value2", $outputElement);
+
+		self::assertSame(
+			"data-attr1=app/ProfileController.php:42,data-attr2=app/ProfileController.php:42",
+			$outputElement->getAttribute("data-bind-debug")
+		);
+	}
+
 	public function testExpandAttributes_atCharacter():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_BASIC_FORM_WITH_AT_BINDER);
 		$sut = new HTMLAttributeBinder();

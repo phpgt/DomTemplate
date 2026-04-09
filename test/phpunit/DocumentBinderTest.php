@@ -164,6 +164,50 @@ class DocumentBinderTest extends TestCase {
 		self::assertSame("This should bind", $document->querySelector("#container3 p span")->textContent);
 	}
 
+	public function testBindKeyValue_dataBindDebugOnElement():void {
+		$document = new HTMLDocument(
+			"<!doctype html><p data-bind:text='name' data-bind-debug>Test</p>"
+		);
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+
+		$expectedDebug = $this->bindNameWithDebug($sut);
+
+		$paragraph = $document->querySelector("p");
+		self::assertSame("Cody", $paragraph->textContent);
+		self::assertSame("text=$expectedDebug", $paragraph->getAttribute("data-bind-debug"));
+	}
+
+	public function testBindData_dataBindDebugInheritedByDescendants():void {
+		$document = new HTMLDocument(<<<HTML
+<!doctype html>
+<section id="profile" data-bind-debug>
+	<h1 data-bind:text="username">Guest</h1>
+	<p>Contact: <a data-bind:href="emailLink" data-bind:text="email">guest@example.com</a></p>
+</section>
+<aside>
+	<span data-bind:text="username">Outside</span>
+</aside>
+HTML);
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+
+		$expectedDebug = $this->bindProfileWithDebug($sut);
+
+		$heading = $document->querySelector("#profile h1");
+		$link = $document->querySelector("#profile a");
+		$outside = $document->querySelector("aside span");
+		self::assertSame("Cody", $heading->textContent);
+		self::assertSame("text=$expectedDebug", $heading->getAttribute("data-bind-debug"));
+		self::assertSame("mailto:cody@example.com", $link->getAttribute("href"));
+		self::assertSame("mailto:cody@example.com", $link->textContent);
+		self::assertSame(
+			"text=$expectedDebug,href=$expectedDebug",
+			$link->getAttribute("data-bind-debug")
+		);
+		self::assertFalse($outside->hasAttribute("data-bind-debug"));
+	}
+
 	public function testBindKeyValue_null():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_MULTIPLE_NESTED_ELEMENTS);
 		$sut = new DocumentBinder($document);
@@ -1090,6 +1134,30 @@ class DocumentBinderTest extends TestCase {
 		);
 	}
 
+	public function testCleanDatasets_dataBindDebugKeepsBoundMetadataAndRemovesEmptyMarkers():void {
+		$document = new HTMLDocument(<<<HTML
+<!doctype html>
+<section id="profile" data-bind-debug>
+	<h1 data-bind:text="username">Guest</h1>
+	<p data-bind:text="email">guest@example.com</p>
+</section>
+HTML);
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+
+		$expectedDebug = $this->bindProfileCleanupDebug($sut);
+		$sut->cleanupDocument();
+
+		$section = $document->querySelector("#profile");
+		$heading = $document->querySelector("#profile h1");
+		$paragraph = $document->querySelector("#profile p");
+		self::assertFalse($section->hasAttribute("data-bind-debug"));
+		self::assertSame("text=$expectedDebug", $heading->getAttribute("data-bind-debug"));
+		self::assertSame("text=$expectedDebug", $paragraph->getAttribute("data-bind-debug"));
+		self::assertFalse($heading->hasAttribute("data-bind:text"));
+		self::assertFalse($paragraph->hasAttribute("data-bind:text"));
+	}
+
 	public function testCleanDatasets_dataTemplate():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_LIST);
 		$sut = new DocumentBinder($document);
@@ -1708,6 +1776,31 @@ class DocumentBinderTest extends TestCase {
 		$buttonReject = $document->querySelector("button[value='reject']");
 		self::assertFalse($buttonAccept->hasAttribute("disabled"));
 		self::assertTrue($buttonReject->hasAttribute("disabled"));
+	}
+
+	private function bindNameWithDebug(DocumentBinder $sut):string {
+		$line = __LINE__ + 1;
+		$sut->bindKeyValue("name", "Cody");
+		return "test/phpunit/DocumentBinderTest.php:$line";
+	}
+
+	private function bindProfileWithDebug(DocumentBinder $sut):string {
+		$line = __LINE__ + 1;
+		$sut->bindData([
+			"username" => "Cody",
+			"email" => "mailto:cody@example.com",
+			"emailLink" => "mailto:cody@example.com",
+		]);
+		return "test/phpunit/DocumentBinderTest.php:$line";
+	}
+
+	private function bindProfileCleanupDebug(DocumentBinder $sut):string {
+		$line = __LINE__ + 1;
+		$sut->bindData([
+			"username" => "Cody",
+			"email" => "cody@example.com",
+		]);
+		return "test/phpunit/DocumentBinderTest.php:$line";
 	}
 
 	private function documentBinderDependencies(HTMLDocument $document, mixed...$otherObjectList):array {

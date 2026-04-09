@@ -12,6 +12,8 @@ class DocumentBinder extends Binder {
 	protected ListBinder $listBinder;
 	protected ListElementCollection $templateCollection;
 	protected BindableCache $bindableCache;
+	private ?string $debugSource = null;
+	private int $debugSourceDepth = 0;
 
 	public function __construct(
 		protected readonly Document $document,
@@ -41,11 +43,13 @@ class DocumentBinder extends Binder {
 		mixed $value,
 		null|string|Element $context = null
 	):void {
-		if(is_string($context)) {
-			$context = $this->stringToContext($context);
-		}
+		$this->withDebugSource(function()use($value, $context):void {
+			if(is_string($context)) {
+				$context = $this->stringToContext($context);
+			}
 
-		$this->bind(null, $value, $context);
+			$this->bind(null, $value, $context);
+		});
 	}
 
 	/**
@@ -57,11 +61,13 @@ class DocumentBinder extends Binder {
 		mixed $value,
 		null|Element|string $context = null,
 	):void {
-		if(is_string($context)) {
-			$context = $this->stringToContext($context);
-		}
+		$this->withDebugSource(function()use($key, $value, $context):void {
+			if(is_string($context)) {
+				$context = $this->stringToContext($context);
+			}
 
-		$this->bind($key, $value, $context);
+			$this->bind($key, $value, $context);
+		});
 	}
 
 	/**
@@ -72,39 +78,41 @@ class DocumentBinder extends Binder {
 		mixed $kvp,
 		null|string|Element $context = null
 	):void {
-		if(is_string($context)) {
-			$context = $this->stringToContext($context);
-		}
+		$this->withDebugSource(function()use($kvp, $context):void {
+			if(is_string($context)) {
+				$context = $this->stringToContext($context);
+			}
 
-		if($this->isIndexedArray($kvp)) {
-			throw new IncompatibleBindDataException(
-				"bindData is only compatible with key-value-pair data, "
-				. "but it was passed an indexed array."
-			);
-		}
+			if($this->isIndexedArray($kvp)) {
+				throw new IncompatibleBindDataException(
+					"bindData is only compatible with key-value-pair data, "
+					. "but it was passed an indexed array."
+				);
+			}
 
-		if(is_object($kvp) && method_exists($kvp, "asArray")) {
-			$kvp = $kvp->asArray();
-		}
+			if(is_object($kvp) && method_exists($kvp, "asArray")) {
+				$kvp = $kvp->asArray();
+			}
 
 // The $kvp object may be both an object with its own key-value-pairs and
 // an iterable object. We can perform the two bind operations here.
 
-		$object = null;
-		if(is_object($kvp)) {
-			if($this->bindableCache->isBindable($kvp)) {
-				$object = $kvp;
-				$kvp = $this->bindableCache->convertToKvp($kvp);
+			$object = null;
+			if(is_object($kvp)) {
+				if($this->bindableCache->isBindable($kvp)) {
+					$object = $kvp;
+					$kvp = $this->bindableCache->convertToKvp($kvp);
+				}
 			}
-		}
 
-		foreach($kvp ?? [] as $key => $value) {
-			$this->bindKeyValue($key, $value, $context);
-		}
+			foreach($kvp ?? [] as $key => $value) {
+				$this->bindKeyValue($key, $value, $context);
+			}
 
-		if(is_iterable($object)) {
-			$this->listBinder->bindListData($object, $context ?? $this->document);
-		}
+			if(is_iterable($object)) {
+				$this->listBinder->bindListData($object, $context ?? $this->document);
+			}
+		});
 	}
 
 	public function bindTable(
@@ -112,15 +120,17 @@ class DocumentBinder extends Binder {
 		null|string|Element $context = null,
 		?string $bindKey = null
 	):void {
-		if(is_string($context)) {
-			$context = $this->stringToContext($context);
-		}
+		$this->withDebugSource(function()use($tableData, $context, $bindKey):void {
+			if(is_string($context)) {
+				$context = $this->stringToContext($context);
+			}
 
-		$this->tableBinder->bindTableData(
-			$tableData,
-			$context ?? $this->document,
-			$bindKey
-		);
+			$this->tableBinder->bindTableData(
+				$tableData,
+				$context ?? $this->document,
+				$bindKey
+			);
+		});
 	}
 
 	/**
@@ -131,15 +141,17 @@ class DocumentBinder extends Binder {
 		null|string|Element $context = null,
 		?string $templateName = null
 	):int {
-		if(is_string($context)) {
-			$context = $this->stringToContext($context);
-		}
+		return $this->withDebugSource(function()use($listData, $context, $templateName):int {
+			if(is_string($context)) {
+				$context = $this->stringToContext($context);
+			}
 
-		if(!$context) {
-			$context = $this->document;
-		}
+			if(!$context) {
+				$context = $this->document;
+			}
 
-		return $this->listBinder->bindListData($listData, $context, $templateName);
+			return $this->listBinder->bindListData($listData, $context, $templateName);
+		});
 	}
 
 	/** @param iterable<int, mixed> $listData */
@@ -149,16 +161,18 @@ class DocumentBinder extends Binder {
 		null|string|Element $context = null,
 		?string $templateName = null
 	):int {
-		if(!$context) {
-			$context = $this->document;
-		}
+		return $this->withDebugSource(function()use($listData, $callback, $context, $templateName):int {
+			if(!$context) {
+				$context = $this->document;
+			}
 
-		return $this->listBinder->bindListData(
-			$listData,
-			$context,
-			$templateName,
-			$callback
-		);
+			return $this->listBinder->bindListData(
+				$listData,
+				$context,
+				$templateName,
+				$callback
+			);
+		});
 	}
 
 	public function cleanupDocument():void {
@@ -177,6 +191,10 @@ class DocumentBinder extends Binder {
 			}
 
 			$ownerElement = $item->ownerElement;
+			if($item->name === "data-bind-debug" && $item->value !== "") {
+				continue;
+			}
+
 			if($ownerElement->hasAttribute("data-element")) {
 				if(!$ownerElement->hasAttribute("data-bound")) {
 					array_push($elementsToRemove, $ownerElement);
@@ -212,6 +230,7 @@ class DocumentBinder extends Binder {
 			$value = call_user_func($value);
 		}
 
+		$this->elementBinder->setDebugSource($this->debugSource);
 		$this->elementBinder->bind($key, $value, $context);
 	}
 
@@ -231,5 +250,61 @@ class DocumentBinder extends Binder {
 
 	protected function stringToContext(string $context):Element {
 		return $this->document->querySelector($context);
+	}
+
+	private function withDebugSource(callable $callback):mixed {
+		$isRootBindingCall = $this->debugSourceDepth === 0;
+		if($isRootBindingCall) {
+			$this->debugSource = $this->resolveDebugSource();
+		}
+
+		$this->debugSourceDepth++;
+		try {
+			return $callback();
+		}
+		finally {
+			$this->debugSourceDepth--;
+			if($this->debugSourceDepth === 0) {
+				$this->debugSource = null;
+				if(isset($this->elementBinder)) {
+					$this->elementBinder->setDebugSource(null);
+				}
+			}
+		}
+	}
+
+	private function resolveDebugSource():?string {
+		foreach(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS) as $frame) {
+			$file = $frame["file"] ?? null;
+			$line = $frame["line"] ?? null;
+			if(!$file || !$line) {
+				continue;
+			}
+
+			$normalizedFile = $this->normalizeDebugFile($file);
+			if(str_starts_with($normalizedFile, "src/")) {
+				continue;
+			}
+			if(str_starts_with($normalizedFile, "vendor/")) {
+				continue;
+			}
+
+			return $normalizedFile . ":" . $line;
+		}
+
+		return null;
+	}
+
+	private function normalizeDebugFile(string $file):string {
+		$cwd = getcwd();
+		if($cwd) {
+			$cwd = rtrim(str_replace("\\", "/", $cwd), "/") . "/";
+			$file = str_replace("\\", "/", $file);
+			if(str_starts_with($file, $cwd)) {
+				return substr($file, strlen($cwd));
+			}
+		}
+
+		return $file;
 	}
 }

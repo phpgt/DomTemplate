@@ -8,6 +8,10 @@ class ElementBinder {
 	private HTMLAttributeCollection $htmlAttributeCollection;
 	private PlaceholderBinder $placeholderBinder;
 
+	public function setDebugSource(?string $debugSource):void {
+		$this->htmlAttributeBinder->setDebugSource($debugSource);
+	}
+
 	public function setDependencies(
 		HTMLAttributeBinder $htmlAttributeBinder,
 		HTMLAttributeCollection $htmlAttributeCollection,
