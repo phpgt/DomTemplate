@@ -128,7 +128,7 @@ class HTMLAttributeBinder {
 		}
 
 		$entry = $bindProperty . "=" . $this->debugSource;
-		$debugAttribute = trim($element->getAttribute("data-bind-debug"));
+		$debugAttribute = trim($element->getAttribute("data-bind-debug") ?? "");
 		if($debugAttribute === "") {
 			$element->setAttribute("data-bind-debug", $entry);
 			return;

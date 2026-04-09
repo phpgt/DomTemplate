@@ -125,6 +125,7 @@ class DocumentBinder extends Binder {
 				$context = $this->stringToContext($context);
 			}
 
+			$this->syncDebugSource();
 			$this->tableBinder->bindTableData(
 				$tableData,
 				$context ?? $this->document,
@@ -150,6 +151,7 @@ class DocumentBinder extends Binder {
 				$context = $this->document;
 			}
 
+			$this->syncDebugSource();
 			return $this->listBinder->bindListData($listData, $context, $templateName);
 		});
 	}
@@ -162,10 +164,15 @@ class DocumentBinder extends Binder {
 		?string $templateName = null
 	):int {
 		return $this->withDebugSource(function()use($listData, $callback, $context, $templateName):int {
+			if(is_string($context)) {
+				$context = $this->stringToContext($context);
+			}
+
 			if(!$context) {
 				$context = $this->document;
 			}
 
+			$this->syncDebugSource();
 			return $this->listBinder->bindListData(
 				$listData,
 				$context,
@@ -230,7 +237,7 @@ class DocumentBinder extends Binder {
 			$value = call_user_func($value);
 		}
 
-		$this->elementBinder->setDebugSource($this->debugSource);
+		$this->syncDebugSource();
 		$this->elementBinder->bind($key, $value, $context);
 	}
 
@@ -250,6 +257,11 @@ class DocumentBinder extends Binder {
 
 	protected function stringToContext(string $context):Element {
 		return $this->document->querySelector($context);
+	}
+
+	private function syncDebugSource():void {
+		$this->elementBinder->setDebugSource($this->debugSource);
+		$this->tableBinder->setDebugSource($this->debugSource);
 	}
 
 	private function withDebugSource(callable $callback):mixed {

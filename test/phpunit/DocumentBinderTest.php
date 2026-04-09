@@ -586,6 +586,26 @@ HTML);
 		self::assertSame("Staff Liason Officer", $table->rows[2]->cells[1]->textContent);
 	}
 
+	public function testBindTable_dataBindDebug():void {
+		$document = new HTMLDocument(<<<HTML
+<!doctype html>
+<section data-bind-debug>
+	<table data-bind:table="tableData"></table>
+</section>
+HTML);
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+
+		$expectedDebug = $this->bindTableWithDebug($sut);
+		$sut->cleanupDocument();
+
+		$cells = $document->querySelectorAll("tbody td");
+		self::assertCount(2, $cells);
+		foreach($cells as $cell) {
+			self::assertSame("text=$expectedDebug", $cell->getAttribute("data-bind-debug"));
+		}
+	}
+
 	public function testBindTable_withNullData():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_TABLES);
 		$sut = new DocumentBinder($document);
@@ -1158,6 +1178,29 @@ HTML);
 		self::assertFalse($paragraph->hasAttribute("data-bind:text"));
 	}
 
+	public function testBindList_dataBindDebug():void {
+		$document = new HTMLDocument(<<<HTML
+<!doctype html>
+<section data-bind-debug>
+	<ul>
+		<li data-list data-bind:text>Template</li>
+	</ul>
+</section>
+HTML);
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+
+		$expectedDebug = $this->bindListWithDebug($sut);
+		$sut->cleanupDocument();
+
+		$listItems = $document->querySelectorAll("ul li");
+		self::assertCount(2, $listItems);
+		self::assertSame("One", $listItems[0]->textContent);
+		self::assertSame("Two", $listItems[1]->textContent);
+		self::assertSame("text=$expectedDebug", $listItems[0]->getAttribute("data-bind-debug"));
+		self::assertSame("text=$expectedDebug", $listItems[1]->getAttribute("data-bind-debug"));
+	}
+
 	public function testCleanDatasets_dataTemplate():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_LIST);
 		$sut = new DocumentBinder($document);
@@ -1723,6 +1766,44 @@ HTML);
 		$sut->bindList(["List", "for", "main component"]);
 	}
 
+	public function testBindListCallback_stringContext():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_COMPONENT_WITH_ATTRIBUTE_NESTED);
+		$subComponent1 = $document->querySelector("#subcomponent-1");
+		$subComponent2 = $document->querySelector("#subcomponent-2");
+
+		$listBinder = self::createMock(ListBinder::class);
+		$bindMatcher = self::exactly(2);
+		$listBinder->expects($bindMatcher)
+			->method("bindListData")
+			->willReturnCallback(function(
+				array $listData,
+				Element|Document $context,
+				?string $templateName,
+				?callable $callback,
+			)use($bindMatcher, $subComponent1, $subComponent2):int {
+				match($bindMatcher->numberOfInvocations()) {
+					1 => self::assertEquals([["A"], $subComponent1], [$listData, $context]),
+					2 => self::assertEquals([["B"], $subComponent2], [$listData, $context]),
+				};
+				self::assertNotNull($callback);
+				return 0;
+			});
+
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(
+			self::createStub(ElementBinder::class),
+			self::createStub(PlaceholderBinder::class),
+			self::createStub(TableBinder::class),
+			$listBinder,
+			self::createStub(ListElementCollection::class),
+			self::createStub(BindableCache::class),
+		);
+
+		$callback = fn(Element $template, mixed $listItem, int|string $key):mixed => $listItem;
+		$sut->bindListCallback(["A"], $callback, "#subcomponent-1");
+		$sut->bindListCallback(["B"], $callback, $subComponent2);
+	}
+
 	public function testBindValue_stringContext():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_COMPONENT_WITH_ATTRIBUTE_NESTED);
 		$documentElement = $document->documentElement;
@@ -1800,6 +1881,21 @@ HTML);
 			"username" => "Cody",
 			"email" => "cody@example.com",
 		]);
+		return "test/phpunit/DocumentBinderTest.php:$line";
+	}
+
+	private function bindListWithDebug(DocumentBinder $sut):string {
+		$line = __LINE__ + 1;
+		$sut->bindList(["One", "Two"]);
+		return "test/phpunit/DocumentBinderTest.php:$line";
+	}
+
+	private function bindTableWithDebug(DocumentBinder $sut):string {
+		$line = __LINE__ + 1;
+		$sut->bindTable([
+			["Name", "Role"],
+			["Cody", "Maintainer"],
+		], null, "tableData");
 		return "test/phpunit/DocumentBinderTest.php:$line";
 	}
 
