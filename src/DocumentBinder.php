@@ -285,26 +285,23 @@ class DocumentBinder extends Binder {
 		}
 	}
 
-	private function resolveDebugSource():?string {
+	private function resolveDebugSource():string {
+		$debugSource = "unknown:0";
 		foreach(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS) as $frame) {
 			$file = $frame["file"] ?? null;
 			$line = $frame["line"] ?? null;
-			if(!$file || !$line) {
-				continue;
-			}
+			if($file && $line) {
+				$debugSource = $this->normalizeDebugFile($file) . ":" . $line;
+				if(str_starts_with($debugSource, "src/")
+				|| str_starts_with($debugSource, "vendor/")) {
+					continue;
+				}
 
-			$normalizedFile = $this->normalizeDebugFile($file);
-			if(str_starts_with($normalizedFile, "src/")) {
-				continue;
+				break;
 			}
-			if(str_starts_with($normalizedFile, "vendor/")) {
-				continue;
-			}
-
-			return $normalizedFile . ":" . $line;
 		}
 
-		return null;
+		return $debugSource;
 	}
 
 	private function normalizeDebugFile(string $file):string {
