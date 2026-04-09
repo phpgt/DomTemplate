@@ -1257,6 +1257,15 @@ HTML;
 </form>
 HTML;
 
+	const HTML_CLEANUP_MIXED_DEBUG = <<<HTML
+<!doctype html>
+<section id="debug-scope" data-bind-debug>
+	<p id="name" data-bind:text="name">Guest</p>
+	<div id="error" data-element data-bind:text="error">Error message</div>
+	<div id="status" data-element="status" data-bind:text="statusMessage">Pending</div>
+</section>
+HTML;
+
 	const HTML_DATA_BIND_LIST = <<<HTML
 <!doctype html>
 <h1 data-bind:text="name">Data-bind:list example</h1>

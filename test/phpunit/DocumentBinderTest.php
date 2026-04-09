@@ -204,6 +204,39 @@ class DocumentBinderTest extends TestCase {
 		}
 	}
 
+	public function testBindKeyValue_dataBindDebugSkipsVendorCallerFrames():void {
+		$vendorFixtureDir = __DIR__ . "/../../vendor/.codex-fixtures";
+		if(!is_dir($vendorFixtureDir)) {
+			mkdir($vendorFixtureDir, 0777, true);
+		}
+
+		$wrapperFile = $vendorFixtureDir . "/bind-debug-wrapper.php";
+		file_put_contents($wrapperFile, <<<'PHP'
+<?php
+return function(\Gt\DomTemplate\DocumentBinder $binder): void {
+	$binder->bindKeyValue("name", "Cody");
+};
+PHP);
+
+		try {
+			$document = new HTMLDocument(HTMLPageContent::HTML_BIND_DEBUG_SINGLE_NAME);
+			$sut = new DocumentBinder($document);
+			$sut->setDependencies(...$this->documentBinderDependencies($document));
+
+			$expectedLine = __LINE__ + 1;
+			(require $wrapperFile)($sut);
+
+			self::assertSame(
+				"text=test/phpunit/DocumentBinderTest.php:$expectedLine",
+				$document->querySelector("p")->getAttribute("data-bind-debug")
+			);
+		}
+		finally {
+			unlink($wrapperFile);
+			@rmdir($vendorFixtureDir);
+		}
+	}
+
 	public function testBindData_dataBindDebugInheritedByDescendants():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_BIND_DEBUG_PROFILE);
 		$sut = new DocumentBinder($document);
@@ -1508,6 +1541,29 @@ class DocumentBinderTest extends TestCase {
 		self::assertNull($errorDiv);
 	}
 
+	public function testCleanupDocument_mixedDebugAndDataElementBehaviour():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_CLEANUP_MIXED_DEBUG);
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+
+		$expectedDebug = $this->bindCleanupMixedDebug($sut);
+		$sut->bindKeyValue("status", true);
+		$sut->cleanupDocument();
+
+		$scope = $document->getElementById("debug-scope");
+		$name = $document->getElementById("name");
+		$error = $document->getElementById("error");
+		$status = $document->getElementById("status");
+		self::assertFalse($scope->hasAttribute("data-bind-debug"));
+		self::assertSame("Cody", $name->textContent);
+		self::assertSame("text=$expectedDebug", $name->getAttribute("data-bind-debug"));
+		self::assertNull($error);
+		self::assertNotNull($status);
+		self::assertSame("Ready", $status->textContent);
+		self::assertFalse($status->hasAttribute("data-element"));
+		self::assertFalse($status->hasAttribute("data-bound"));
+	}
+
 	public function test_bindData_withList_dataBindList():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_DATA_BIND_LIST);
 		$sut = new DocumentBinder($document);
@@ -1895,6 +1951,15 @@ class DocumentBinderTest extends TestCase {
 			["Name", "Role"],
 			["Cody", "Maintainer"],
 		], null, "tableData");
+		return "test/phpunit/DocumentBinderTest.php:$line";
+	}
+
+	private function bindCleanupMixedDebug(DocumentBinder $sut):string {
+		$line = __LINE__ + 1;
+		$sut->bindData([
+			"name" => "Cody",
+			"statusMessage" => "Ready",
+		]);
 		return "test/phpunit/DocumentBinderTest.php:$line";
 	}
 

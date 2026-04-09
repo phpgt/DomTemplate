@@ -2,6 +2,7 @@
 namespace Gt\DomTemplate\Test;
 
 use ArrayIterator;
+use IteratorAggregate;
 use Gt\Dom\HTMLDocument;
 use Gt\DomTemplate\BindableCache;
 use Gt\DomTemplate\ElementBinder;
@@ -199,6 +200,27 @@ class TableBinderTest extends TestCase {
 			["Alan Statham", "Head of Radiology"],
 			["Sue White", "Staff Liason Officer"],
 		]);
+		$sut->bindTableData($tableData, $document->getElementById("tbl1"), "tableData");
+
+		$table = $document->getElementById("tbl1");
+		self::assertSame("Alan Statham", $table->tBodies[0]->rows[0]->cells[0]->textContent);
+		self::assertSame("Staff Liason Officer", $table->tBodies[0]->rows[1]->cells[1]->textContent);
+	}
+
+	public function testBindTable_iteratorAggregateData():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_TABLES);
+		$sut = new TableBinder();
+		$sut->setDependencies(...$this->tablebinderDependencies($document));
+
+		$tableData = new class implements IteratorAggregate {
+			public function getIterator():ArrayIterator {
+				return new ArrayIterator([
+					["Name", "Position"],
+					["Alan Statham", "Head of Radiology"],
+					["Sue White", "Staff Liason Officer"],
+				]);
+			}
+		};
 		$sut->bindTableData($tableData, $document->getElementById("tbl1"), "tableData");
 
 		$table = $document->getElementById("tbl1");
