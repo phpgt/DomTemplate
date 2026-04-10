@@ -1283,6 +1283,43 @@ HTML;
 </form>
 HTML;
 
+	const HTML_PAGE_WITH_TWO_LIST_COMPONENTS = <<<HTML
+<!doctype html>
+<meta charset="utf-8" />
+<title>Two components, each with lists</title>
+
+<global-header />
+<h1>Test page</h1>
+
+<main>
+	<p>Simple list 1</p>
+	<simple-list />
+	
+	<p>Simple lilst 2</p>
+	<simple-list />
+</main>
+HTML;
+
+	const HTML_GLOBAL_HEADER = <<<HTML
+<nav>
+	<ul>
+		<li data-list>
+			<a href="/" data-bind:text="name" data-bind:href="link">Link title</a>
+		</li>
+	</ul>
+</nav>
+HTML;
+
+	const HTML_SIMPLE_LIST = <<<HTML
+<ul>
+	<li data-list>
+		<p>Name: <span data-bind:text="name">unnamed</span></p>
+	</li>
+</ul>
+HTML;
+
+
+
 	public static function createHTML(string $html = ""):HTMLDocument {
 		return new HTMLDocument($html);
 	}
