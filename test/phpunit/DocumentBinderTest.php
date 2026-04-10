@@ -1772,6 +1772,52 @@ class DocumentBinderTest extends PartialContentTestCase {
 		self::assertCount(4, $simpleListEl2->querySelectorAll("li"));
 	}
 
+	public function testBindListCallback_multipleComponent():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_PAGE_WITH_TWO_LIST_COMPONENTS);
+		$componentExpander = new ComponentExpander(
+			$document,
+			self::mockPartialContent(
+				"_component",
+				[
+					"global-header" => HTMLPageContent::HTML_GLOBAL_HEADER,
+					"simple-list" => HTMLPageContent::HTML_SIMPLE_LIST,
+				]
+			)
+		);
+		$componentExpander->expand();
+		$dependencies = $this->documentBinderDependencies($document);
+
+		[$simpleListEl1, $simpleListEl2] = iterator_to_array($document->querySelectorAll("simple-list"));
+		$callback = fn(Element $template, array $row):array => $row;
+
+		$simpleListBinder1 = new ComponentBinder($document);
+		$simpleListBinder1->setDependencies(...$dependencies);
+		$simpleListBinder1->setComponentBinderDependencies($simpleListEl1);
+		$simpleListBinder1->bindListCallback(
+			[
+				["name" => "Andrew"],
+				["name" => "Becca"],
+			],
+			$callback,
+		);
+
+		$simpleListBinder2 = new ComponentBinder($document);
+		$simpleListBinder2->setDependencies(...$dependencies);
+		$simpleListBinder2->setComponentBinderDependencies($simpleListEl2);
+		$simpleListBinder2->bindListCallback(
+			[
+				["name" => "Charlie"],
+				["name" => "Devi"],
+				["name" => "Elle"],
+				["name" => "Frankie"],
+			],
+			$callback,
+		);
+
+		self::assertCount(2, $simpleListEl1->querySelectorAll("li"));
+		self::assertCount(4, $simpleListEl2->querySelectorAll("li"));
+	}
+
 	private function documentBinderDependencies(HTMLDocument $document, mixed...$otherObjectList):array {
 		$htmlAttributeBinder = new HTMLAttributeBinder();
 		$htmlAttributeCollection = new HTMLAttributeCollection();

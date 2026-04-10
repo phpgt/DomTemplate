@@ -149,6 +149,10 @@ class DocumentBinder extends Binder {
 		null|string|Element $context = null,
 		?string $templateName = null
 	):int {
+		if(is_string($context)) {
+			$context = $this->stringToContext($context);
+		}
+
 		if(!$context) {
 			$context = $this->document;
 		}
