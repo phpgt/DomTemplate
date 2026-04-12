@@ -79,6 +79,14 @@ class ComponentBinder extends DocumentBinder {
 	}
 
 	protected function stringToContext(string $context):Element {
-		return $this->componentElement->querySelector($context);
+		$element = $this->componentElement->querySelector($context);
+		if($element) {
+			return $element;
+		}
+
+		throw new ContextElementNotFoundException(
+			"No element matches the context selector \"$context\" within "
+			. "<{$this->componentElement->tagName}>."
+		);
 	}
 }

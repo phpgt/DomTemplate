@@ -41,7 +41,7 @@ class PlaceholderBinder {
 			$keyRegex = is_null($key)
 				? ""
 				: preg_quote($key, "/");
-			$regex = "/{{ *(?P<KEY>$keyRegex) *(\?\? ?(?P<DEFAULT>\w+))? ?}}/";
+			$regex = "/{{ *(?P<KEY>$keyRegex) *(?:\?\? *(?P<DEFAULT>.*?))? *}}/";
 			preg_match_all($regex, $nodeValue, $matches);
 
 			foreach($matches[0] as $i => $subjectToReplace) {

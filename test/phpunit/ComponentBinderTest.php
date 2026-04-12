@@ -6,6 +6,7 @@ use Gt\DomTemplate\BindableCache;
 use Gt\DomTemplate\ComponentBinder;
 use Gt\DomTemplate\ComponentDoesNotContainContextException;
 use Gt\DomTemplate\ComponentExpander;
+use Gt\DomTemplate\ContextElementNotFoundException;
 use Gt\DomTemplate\ElementBinder;
 use Gt\DomTemplate\ListBinder;
 use Gt\DomTemplate\ListElementCollection;
@@ -105,6 +106,24 @@ class ComponentBinderTest extends TestCase {
 		$sut->bindKeyValue("title", "Title 1!", "#subcomponent-1");
 		$sut->bindKeyValue("title", "Title 2!", "#subcomponent-2");
 		$sut->bindKeyValue("title", "Main title!");
+	}
+
+	public function testBindKeyValue_missingStringContext():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_COMPONENT_WITH_ATTRIBUTE_NESTED);
+		$componentElement = $document->querySelector("example-component");
+		$sut = new ComponentBinder($document);
+		$sut->setDependencies(
+			self::createStub(ElementBinder::class),
+			self::createStub(PlaceholderBinder::class),
+			self::createStub(TableBinder::class),
+			self::createStub(ListBinder::class),
+			self::createStub(ListElementCollection::class),
+			self::createStub(BindableCache::class),
+		);
+		$sut->setComponentBinderDependencies($componentElement);
+		self::expectException(ContextElementNotFoundException::class);
+		self::expectExceptionMessage('No element matches the context selector "#missing" within <example-component>.');
+		$sut->bindKeyValue("title", "Example", "#missing");
 	}
 
 	public function testBindData_stringContext():void {

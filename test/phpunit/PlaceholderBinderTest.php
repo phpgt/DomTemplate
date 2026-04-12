@@ -73,6 +73,13 @@ class PlaceholderBinderTest extends TestCase {
 		self::assertSame("Hello, 0!", $greeting->textContent);
 	}
 
+	public function testBind_multiWordDefault():void {
+		$document = new HTMLDocument("<p>Hello, {{name ?? your friend}}!</p>");
+		$sut = new PlaceholderBinder();
+		$sut->bind("name", null, $document);
+		self::assertSame("Hello, your friend!", $document->querySelector("p")->textContent);
+	}
+
 	public function testBind_multipleAttribute():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_PLACEHOLDER);
 		$sut = new PlaceholderBinder();

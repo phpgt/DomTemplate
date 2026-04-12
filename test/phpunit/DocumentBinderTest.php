@@ -14,6 +14,7 @@ use Gt\DomTemplate\BindGetter;
 use Gt\DomTemplate\BindValue;
 use Gt\DomTemplate\ComponentBinder;
 use Gt\DomTemplate\ComponentExpander;
+use Gt\DomTemplate\ContextElementNotFoundException;
 use Gt\DomTemplate\DocumentBinder;
 use Gt\DomTemplate\ElementBinder;
 use Gt\DomTemplate\HTMLAttributeBinder;
@@ -147,6 +148,15 @@ class DocumentBinderTest extends PartialContentTestCase {
 		$sut->setDependencies(...$this->documentBinderDependencies($document));
 		$sut->bindKeyValue("missing", "example");
 		self::assertSame("Nothing is bound", $document->querySelector("output")->innerHTML);
+	}
+
+	public function testBindKeyValue_missingStringContext():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_SINGLE_ELEMENT);
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+		self::expectException(ContextElementNotFoundException::class);
+		self::expectExceptionMessage('No element matches the context selector "#missing".');
+		$sut->bindKeyValue("title", "Example", "#missing");
 	}
 
 	public function testBindKeyValue_noMatchesInDifferentHierarchy():void {

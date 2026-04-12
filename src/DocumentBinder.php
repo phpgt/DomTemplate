@@ -256,7 +256,14 @@ class DocumentBinder extends Binder {
 	}
 
 	protected function stringToContext(string $context):Element {
-		return $this->document->querySelector($context);
+		$element = $this->document->querySelector($context);
+		if($element) {
+			return $element;
+		}
+
+		throw new ContextElementNotFoundException(
+			"No element matches the context selector \"$context\"."
+		);
 	}
 
 	private function syncDebugSource():void {
