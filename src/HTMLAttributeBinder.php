@@ -9,10 +9,15 @@ use Gt\Dom\Element;
 class HTMLAttributeBinder {
 	private ListBinder $listBinder;
 	private TableBinder $tableBinder;
+	private ?string $debugSource = null;
 
 	public function setDependencies(ListBinder $listBinder, TableBinder $tableBinder):void {
 		$this->listBinder = $listBinder;
 		$this->tableBinder = $tableBinder;
+	}
+
+	public function setDebugSource(?string $debugSource):void {
+		$this->debugSource = $debugSource;
 	}
 
 	public function bind(
@@ -49,6 +54,7 @@ class HTMLAttributeBinder {
 				$bindValue,
 				$modifier,
 			);
+			$this->appendDebugInfo($element, $bindProperty);
 			$element->setAttribute("data-bound", "");
 			if(!$attribute->ownerElement->hasAttribute("data-rebind")) {
 				$attributesToRemove[] = $attributeName;
@@ -112,7 +118,27 @@ class HTMLAttributeBinder {
 	}
 
 	private function shouldHandleAttribute(string $attributeName):bool {
-		return str_starts_with($attributeName, "data-bind");
+		return str_starts_with($attributeName, "data-bind:")
+			|| $attributeName === "data-bind";
+	}
+
+	private function appendDebugInfo(Element $element, string $bindProperty):void {
+		if(!$this->debugSource || !$this->isDebugEnabled($element)) {
+			return;
+		}
+
+		$entry = $bindProperty . "=" . $this->debugSource;
+		$debugAttribute = trim($element->getAttribute("data-bind-debug") ?? "");
+		if($debugAttribute === "") {
+			$element->setAttribute("data-bind-debug", $entry);
+			return;
+		}
+
+		$element->setAttribute("data-bind-debug", $debugAttribute . "," . $entry);
+	}
+
+	private function isDebugEnabled(Element $element):bool {
+		return !is_null($element->closest("[data-bind-debug]"));
 	}
 
 	private function getBindProperty(
