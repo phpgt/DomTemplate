@@ -22,6 +22,7 @@ class TableBinder {
 	private HTMLAttributeBinder $htmlAttributeBinder;
 	private HTMLAttributeCollection $htmlAttributeCollection;
 	private PlaceholderBinder $placeholderBinder;
+	private ?string $debugSource = null;
 
 	public function setDependencies(
 		ListBinder $listBinder,
@@ -39,12 +40,16 @@ class TableBinder {
 		$this->placeholderBinder = $placeholderBinder;
 	}
 
+	public function setDebugSource(?string $debugSource):void {
+		$this->debugSource = $debugSource;
+	}
+
 	/**
 	 * @param BindTableDataInput $tableData
 	 * @param Element $context
 	 */
 	public function bindTableData(
-		array $tableData,
+		iterable $tableData,
 		Document|Element $context,
 		?string $bindKey = null
 	):void {
@@ -99,7 +104,15 @@ class TableBinder {
 	private function tableMatchesBindKey(Element $table, ?string $bindKey):bool {
 		$dataBindTableElement = $table;
 		if(!$dataBindTableElement->hasAttribute("data-bind:table")) {
-			$dataBindTableElement = $table->closest("[data-bind:table]") ?? $table;
+			$parent = $table->parentElement;
+			while($parent) {
+				if($parent->hasAttribute("data-bind:table")) {
+					$dataBindTableElement = $parent;
+					break;
+				}
+
+				$parent = $parent->parentElement;
+			}
 		}
 
 		return $dataBindTableElement->getAttribute("data-bind:table") == $bindKey;
@@ -139,6 +152,7 @@ class TableBinder {
 		foreach($headerRow as $headerValue) {
 			$headerCell = $tableHeadRow->insertCell();
 			$headerCell->textContent = $headerValue;
+			$this->appendDebugInfo($headerCell, "text");
 		}
 
 		return $headerRow;
@@ -197,6 +211,7 @@ class TableBinder {
 			if(!$cellElement->parentElement) {
 				$tableRow->appendChild($cellElement);
 			}
+			$this->appendDebugInfo($cellElement, "text");
 		}
 	}
 
@@ -519,16 +534,45 @@ class TableBinder {
 		}
 
 		$this->htmlAttributeBinder->setDependencies($this->listBinder, $this);
+		$this->htmlAttributeBinder->setDebugSource($this->debugSource);
 		$this->elementBinder->setDependencies(
 			$this->htmlAttributeBinder,
 			$this->htmlAttributeCollection,
 			$this->placeholderBinder,
 		);
+		$this->elementBinder->setDebugSource($this->debugSource);
 		$this->listBinder->setDependencies(
 			$this->elementBinder,
 			$this->templateCollection,
 			new BindableCache(),
 			$this,
+		);
+	}
+
+	private function appendDebugInfo(Element $element, string $bindProperty):void {
+		if(!$this->debugSource) {
+			return;
+		}
+
+		$currentElement = $element;
+		while($currentElement) {
+			if($currentElement->hasAttribute("data-bind-debug")) {
+				break;
+			}
+
+			$currentElement = $currentElement->parentElement;
+		}
+		if(!$currentElement) {
+			return;
+		}
+
+		$entry = $bindProperty . "=" . $this->debugSource;
+		$current = trim($element->getAttribute("data-bind-debug") ?? "");
+		$element->setAttribute(
+			"data-bind-debug",
+			$current === ""
+				? $entry
+				: $current . "," . $entry
 		);
 	}
 }

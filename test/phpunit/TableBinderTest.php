@@ -1,6 +1,8 @@
 <?php
 namespace Gt\DomTemplate\Test;
 
+use ArrayIterator;
+use IteratorAggregate;
 use Gt\Dom\HTMLDocument;
 use Gt\DomTemplate\BindableCache;
 use Gt\DomTemplate\ElementBinder;
@@ -82,6 +84,21 @@ class TableBinderTest extends TestCase {
 		self::assertEmpty($table1->tBodies);
 		self::assertCount(1, $table2->tBodies[0]->rows);
 		self::assertCount(1, $table3->tBodies[0]->rows);
+	}
+
+	public function testBindTable_matchesAncestorBindKey():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_TABLE_ANCESTOR_BIND_KEY);
+		$sut = new TableBinder();
+		$sut->setDependencies(...$this->tablebinderDependencies($document));
+
+		$sut->bindTableData([
+			["Name", "Role"],
+			["Cody", "Maintainer"],
+		], $document, "tableData");
+
+		$table = $document->getElementById("tbl");
+		self::assertSame("Cody", $table->tBodies[0]->rows[0]->cells[0]->textContent);
+		self::assertSame("Maintainer", $table->tBodies[0]->rows[0]->cells[1]->textContent);
 	}
 
 	/**
@@ -171,6 +188,44 @@ class TableBinderTest extends TestCase {
 		self::assertSame("Sara", $row3->cells[0]->textContent);
 		self::assertSame("Golemon", $row3->cells[1]->textContent);
 		self::assertSame("pollita@php.net", $row3->cells[2]->textContent);
+	}
+
+	public function testBindTable_traversableData():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_TABLES);
+		$sut = new TableBinder();
+		$sut->setDependencies(...$this->tablebinderDependencies($document));
+
+		$tableData = new ArrayIterator([
+			["Name", "Position"],
+			["Alan Statham", "Head of Radiology"],
+			["Sue White", "Staff Liason Officer"],
+		]);
+		$sut->bindTableData($tableData, $document->getElementById("tbl1"), "tableData");
+
+		$table = $document->getElementById("tbl1");
+		self::assertSame("Alan Statham", $table->tBodies[0]->rows[0]->cells[0]->textContent);
+		self::assertSame("Staff Liason Officer", $table->tBodies[0]->rows[1]->cells[1]->textContent);
+	}
+
+	public function testBindTable_iteratorAggregateData():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_TABLES);
+		$sut = new TableBinder();
+		$sut->setDependencies(...$this->tablebinderDependencies($document));
+
+		$tableData = new class implements IteratorAggregate {
+			public function getIterator():ArrayIterator {
+				return new ArrayIterator([
+					["Name", "Position"],
+					["Alan Statham", "Head of Radiology"],
+					["Sue White", "Staff Liason Officer"],
+				]);
+			}
+		};
+		$sut->bindTableData($tableData, $document->getElementById("tbl1"), "tableData");
+
+		$table = $document->getElementById("tbl1");
+		self::assertSame("Alan Statham", $table->tBodies[0]->rows[0]->cells[0]->textContent);
+		self::assertSame("Staff Liason Officer", $table->tBodies[0]->rows[1]->cells[1]->textContent);
 	}
 
 	/**
@@ -670,6 +725,21 @@ class TableBinderTest extends TestCase {
 		$sut->detectTableDataStructureType($data);
 	}
 
+	public function testDetectTableStructureType_listRejectsMixedIterableAndScalarShapes():void {
+		$data = [
+			["Item", "Price"],
+			["Washing machine", "69800"],
+			[
+				"Television" => ["99800"],
+				"Stock Level" => ["7"],
+			],
+		];
+		$sut = new TableBinder();
+
+		self::expectException(IncorrectTableDataFormat::class);
+		$sut->detectTableDataStructureType($data);
+	}
+
 	public function testBindTableData_noTableInitializesFallbackDependencies():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_EMPTY);
 		$sut = new TableBinder();
@@ -695,6 +765,23 @@ class TableBinderTest extends TestCase {
 		$table = $document->getElementById("tbl1");
 		self::assertSame("Alan Statham", $table->tBodies[0]->rows[0]->cells[0]->textContent);
 		self::assertSame("Staff Liason Officer", $table->tBodies[0]->rows[1]->cells[1]->textContent);
+	}
+
+	public function testBindTableData_debugAddsMetadataToGeneratedCells():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_BIND_DEBUG_GENERATED_TABLE);
+		$sut = new TableBinder();
+		$sut->setDependencies(...$this->tablebinderDependencies($document));
+		$sut->setDebugSource("app/Controller.php:10");
+
+		$sut->bindTableData([
+			["Name", "Role"],
+			["Cody", "Maintainer"],
+		], $document, "tableData");
+
+		$headerCell = $document->querySelector("thead td");
+		$bodyCell = $document->querySelector("tbody td");
+		self::assertSame("text=app/Controller.php:10", $headerCell->getAttribute("data-bind-debug"));
+		self::assertSame("text=app/Controller.php:10", $bodyCell->getAttribute("data-bind-debug"));
 	}
 
 	private function tablebinderDependencies(HTMLDocument $document):array {

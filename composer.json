@@ -24,6 +24,11 @@
 			"Gt\\DomTemplate\\Test\\": "./test/phpunit"
 		}
 	},
+	"config": {
+		"platform": {
+			"php": "8.2.0"
+		}
+	},
 
 	"scripts": {
 		"phpunit": "vendor/bin/phpunit --configuration phpunit.xml",

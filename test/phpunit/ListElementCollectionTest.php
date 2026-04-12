@@ -26,9 +26,7 @@ class ListElementCollectionTest extends TestCase {
 	}
 
 	public function testGet_noName_noMatchIncludesContextDescription():void {
-		$document = new HTMLDocument(
-			"<!doctype html><html><body><div id='example' class='one two'></div></body></html>"
-		);
+		$document = new HTMLDocument(HTMLPageContent::HTML_LIST_ELEMENT_COLLECTION_CONTEXT);
 		$sut = new ListElementCollection($document);
 
 		self::expectException(ListElementNotFoundInContextException::class);
