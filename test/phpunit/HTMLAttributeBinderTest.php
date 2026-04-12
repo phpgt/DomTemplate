@@ -1,10 +1,10 @@
 <?php
-namespace Gt\DomTemplate\Test;
+namespace GT\DomTemplate\Test;
 
 use DateTime;
 use Gt\Dom\HTMLDocument;
-use Gt\DomTemplate\HTMLAttributeBinder;
-use Gt\DomTemplate\Test\TestHelper\HTMLPageContent;
+use GT\DomTemplate\HTMLAttributeBinder;
+use GT\DomTemplate\Test\TestHelper\HTMLPageContent;
 use PHPUnit\Framework\TestCase;
 
 class HTMLAttributeBinderTest extends TestCase {

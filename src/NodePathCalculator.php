@@ -1,5 +1,5 @@
 <?php
-namespace Gt\DomTemplate;
+namespace GT\DomTemplate;
 
 use Gt\Dom\Element;
 use Gt\Dom\Node;

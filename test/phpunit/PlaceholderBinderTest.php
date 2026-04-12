@@ -1,9 +1,9 @@
 <?php
-namespace Gt\DomTemplate\Test;
+namespace GT\DomTemplate\Test;
 
 use Gt\Dom\HTMLDocument;
-use Gt\DomTemplate\PlaceholderBinder;
-use Gt\DomTemplate\Test\TestHelper\HTMLPageContent;
+use GT\DomTemplate\PlaceholderBinder;
+use GT\DomTemplate\Test\TestHelper\HTMLPageContent;
 use PHPUnit\Framework\TestCase;
 
 class PlaceholderBinderTest extends TestCase {

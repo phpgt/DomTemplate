@@ -1,5 +1,5 @@
 <?php
-namespace Gt\DomTemplate\Test\TestHelper\Model\ArrayIterator\Product;
+namespace GT\DomTemplate\Test\TestHelper\Model\ArrayIterator\Product;
 
 use ArrayIterator;
 

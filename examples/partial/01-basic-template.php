@@ -1,8 +1,8 @@
 <?php
 use Gt\Dom\HTMLDocument;
-use Gt\DomTemplate\DocumentBinder;
-use Gt\DomTemplate\PartialContent;
-use Gt\DomTemplate\PartialExpander;
+use GT\DomTemplate\DocumentBinder;
+use GT\DomTemplate\PartialContent;
+use GT\DomTemplate\PartialExpander;
 
 require(__DIR__ . "/../../vendor/autoload.php");
 // EXAMPLE CODE: https://github.com/PhpGt/DomTemplate/wiki/Partials#pre-binding-using-template-variables

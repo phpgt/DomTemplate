@@ -1,17 +1,17 @@
 <?php
 use Gt\Dom\HTMLDocument;
-use Gt\DomTemplate\Bind;
-use Gt\DomTemplate\BindableCache;
-use Gt\DomTemplate\Binder;
-use Gt\DomTemplate\BindGetter;
-use Gt\DomTemplate\DocumentBinder;
-use Gt\DomTemplate\ElementBinder;
-use Gt\DomTemplate\HTMLAttributeBinder;
-use Gt\DomTemplate\HTMLAttributeCollection;
-use Gt\DomTemplate\ListBinder;
-use Gt\DomTemplate\ListElementCollection;
-use Gt\DomTemplate\PlaceholderBinder;
-use Gt\DomTemplate\TableBinder;
+use GT\DomTemplate\Bind;
+use GT\DomTemplate\BindableCache;
+use GT\DomTemplate\Binder;
+use GT\DomTemplate\BindGetter;
+use GT\DomTemplate\DocumentBinder;
+use GT\DomTemplate\ElementBinder;
+use GT\DomTemplate\HTMLAttributeBinder;
+use GT\DomTemplate\HTMLAttributeCollection;
+use GT\DomTemplate\ListBinder;
+use GT\DomTemplate\ListElementCollection;
+use GT\DomTemplate\PlaceholderBinder;
+use GT\DomTemplate\TableBinder;
 
 require __DIR__ . "/../../vendor/autoload.php";
 

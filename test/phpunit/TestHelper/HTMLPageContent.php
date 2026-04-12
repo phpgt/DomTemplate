@@ -1,5 +1,5 @@
 <?php
-namespace Gt\DomTemplate\Test\TestHelper;
+namespace GT\DomTemplate\Test\TestHelper;
 
 use Gt\Dom\HTMLDocument;
 use Gt\Dom\XMLDocument;

@@ -1,6 +1,6 @@
 <?php /** @noinspection ALL */
 /** @noinspection PhpUnused */
-namespace Gt\DomTemplate\Test;
+namespace GT\DomTemplate\Test;
 
 use DateInterval;
 use Exception;
@@ -8,31 +8,31 @@ use Gt\Dom\Document;
 use Gt\Dom\Element;
 use Gt\Dom\HTMLCollection;
 use Gt\Dom\HTMLDocument;
-use Gt\DomTemplate\Bind;
-use Gt\DomTemplate\BindableCache;
-use Gt\DomTemplate\BindGetter;
-use Gt\DomTemplate\BindValue;
-use Gt\DomTemplate\ComponentBinder;
-use Gt\DomTemplate\ComponentExpander;
-use Gt\DomTemplate\ContextElementNotFoundException;
-use Gt\DomTemplate\DocumentBinder;
-use Gt\DomTemplate\ElementBinder;
-use Gt\DomTemplate\HTMLAttributeBinder;
-use Gt\DomTemplate\HTMLAttributeCollection;
-use Gt\DomTemplate\IncompatibleBindDataException;
-use Gt\DomTemplate\InvalidBindPropertyException;
-use Gt\DomTemplate\ListBinder;
-use Gt\DomTemplate\ListElementCollection;
-use Gt\DomTemplate\PartialContent;
-use Gt\DomTemplate\PlaceholderBinder;
-use Gt\DomTemplate\TableBinder;
-use Gt\DomTemplate\TableElementNotFoundInContextException;
-use Gt\DomTemplate\Test\TestHelper\HTMLPageContent;
-use Gt\DomTemplate\Test\TestHelper\ExampleClass;
-use Gt\DomTemplate\Test\TestHelper\Model\Address;
-use Gt\DomTemplate\Test\TestHelper\Model\ArrayIterator\Product\ProductList;
-use Gt\DomTemplate\Test\TestHelper\Model\Country;
-use Gt\DomTemplate\Test\TestHelper\Model\Customer;
+use GT\DomTemplate\Bind;
+use GT\DomTemplate\BindableCache;
+use GT\DomTemplate\BindGetter;
+use GT\DomTemplate\BindValue;
+use GT\DomTemplate\ComponentBinder;
+use GT\DomTemplate\ComponentExpander;
+use GT\DomTemplate\ContextElementNotFoundException;
+use GT\DomTemplate\DocumentBinder;
+use GT\DomTemplate\ElementBinder;
+use GT\DomTemplate\HTMLAttributeBinder;
+use GT\DomTemplate\HTMLAttributeCollection;
+use GT\DomTemplate\IncompatibleBindDataException;
+use GT\DomTemplate\InvalidBindPropertyException;
+use GT\DomTemplate\ListBinder;
+use GT\DomTemplate\ListElementCollection;
+use GT\DomTemplate\PartialContent;
+use GT\DomTemplate\PlaceholderBinder;
+use GT\DomTemplate\TableBinder;
+use GT\DomTemplate\TableElementNotFoundInContextException;
+use GT\DomTemplate\Test\TestHelper\HTMLPageContent;
+use GT\DomTemplate\Test\TestHelper\ExampleClass;
+use GT\DomTemplate\Test\TestHelper\Model\Address;
+use GT\DomTemplate\Test\TestHelper\Model\ArrayIterator\Product\ProductList;
+use GT\DomTemplate\Test\TestHelper\Model\Country;
+use GT\DomTemplate\Test\TestHelper\Model\Customer;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use IteratorAggregate;
@@ -193,7 +193,7 @@ class DocumentBinderTest extends PartialContentTestCase {
 		$tempFile = tempnam(sys_get_temp_dir(), "domtemplate-debug-");
 		file_put_contents($tempFile, <<<'PHP'
 		<?php
-		return function(\Gt\DomTemplate\DocumentBinder $binder): void {
+		return function(\GT\DomTemplate\DocumentBinder $binder): void {
 			$binder->bindKeyValue("name", "Cody");
 		};
 		PHP);
@@ -226,7 +226,7 @@ class DocumentBinderTest extends PartialContentTestCase {
 		$wrapperFile = $vendorFixtureDir . "/bind-debug-wrapper.php";
 		file_put_contents($wrapperFile, <<<'PHP'
 <?php
-return function(\Gt\DomTemplate\DocumentBinder $binder): void {
+return function(\GT\DomTemplate\DocumentBinder $binder): void {
 	$binder->bindKeyValue("name", "Cody");
 };
 PHP);

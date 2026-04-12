@@ -1,18 +1,18 @@
 <?php
-namespace Gt\DomTemplate\Test;
+namespace GT\DomTemplate\Test;
 use Gt\Dom\Element;
 use Gt\Dom\HTMLDocument;
-use Gt\DomTemplate\BindableCache;
-use Gt\DomTemplate\ComponentBinder;
-use Gt\DomTemplate\ComponentDoesNotContainContextException;
-use Gt\DomTemplate\ComponentExpander;
-use Gt\DomTemplate\ContextElementNotFoundException;
-use Gt\DomTemplate\ElementBinder;
-use Gt\DomTemplate\ListBinder;
-use Gt\DomTemplate\ListElementCollection;
-use Gt\DomTemplate\PlaceholderBinder;
-use Gt\DomTemplate\TableBinder;
-use Gt\DomTemplate\Test\TestHelper\HTMLPageContent;
+use GT\DomTemplate\BindableCache;
+use GT\DomTemplate\ComponentBinder;
+use GT\DomTemplate\ComponentDoesNotContainContextException;
+use GT\DomTemplate\ComponentExpander;
+use GT\DomTemplate\ContextElementNotFoundException;
+use GT\DomTemplate\ElementBinder;
+use GT\DomTemplate\ListBinder;
+use GT\DomTemplate\ListElementCollection;
+use GT\DomTemplate\PlaceholderBinder;
+use GT\DomTemplate\TableBinder;
+use GT\DomTemplate\Test\TestHelper\HTMLPageContent;
 use PHPUnit\Framework\TestCase;
 
 class ComponentBinderTest extends TestCase {

@@ -16,11 +16,13 @@
 
 	"autoload": {
 		"psr-4": {
+			"GT\\DomTemplate\\": "./src",
 			"Gt\\DomTemplate\\": "./src"
 		}
 	},
 	"autoload-dev": {
 		"psr-4": {
+			"GT\\DomTemplate\\Test\\": "./test/phpunit",
 			"Gt\\DomTemplate\\Test\\": "./test/phpunit"
 		}
 	},

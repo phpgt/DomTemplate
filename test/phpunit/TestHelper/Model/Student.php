@@ -1,7 +1,7 @@
 <?php
-namespace Gt\DomTemplate\Test\TestHelper\Model;
+namespace GT\DomTemplate\Test\TestHelper\Model;
 
-use Gt\DomTemplate\BindGetter;
+use GT\DomTemplate\BindGetter;
 
 class Student {
 	public function __construct(

@@ -1,5 +1,5 @@
 <?php
-namespace Gt\DomTemplate;
+namespace GT\DomTemplate;
 
 use Gt\Dom\Comment;
 use Gt\Dom\Document;

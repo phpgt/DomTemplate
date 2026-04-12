@@ -1,5 +1,5 @@
 <?php
-namespace Gt\DomTemplate\Test\TestHelper\Model\IteratorAggregate\Music;
+namespace GT\DomTemplate\Test\TestHelper\Model\IteratorAggregate\Music;
 
 use ArrayIterator;
 use IteratorAggregate;

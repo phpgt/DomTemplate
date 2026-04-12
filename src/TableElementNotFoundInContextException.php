@@ -1,4 +1,4 @@
 <?php
-namespace Gt\DomTemplate;
+namespace GT\DomTemplate;
 
 class TableElementNotFoundInContextException extends DomTemplateException {}

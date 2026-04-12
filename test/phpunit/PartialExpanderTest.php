@@ -1,15 +1,15 @@
 <?php
-namespace Gt\DomTemplate\Test;
+namespace GT\DomTemplate\Test;
 
 use Gt\Dom\HTMLDocument;
-use Gt\DomTemplate\CyclicRecursionException;
-use Gt\DomTemplate\DocumentBinder;
-use Gt\DomTemplate\PartialContent;
-use Gt\DomTemplate\PartialContentFileNotFoundException;
-use Gt\DomTemplate\PartialExpander;
-use Gt\DomTemplate\PartialInjectionMultiplePointException;
-use Gt\DomTemplate\PartialInjectionPointNotFoundException;
-use Gt\DomTemplate\Test\TestHelper\HTMLPageContent;
+use GT\DomTemplate\CyclicRecursionException;
+use GT\DomTemplate\DocumentBinder;
+use GT\DomTemplate\PartialContent;
+use GT\DomTemplate\PartialContentFileNotFoundException;
+use GT\DomTemplate\PartialExpander;
+use GT\DomTemplate\PartialInjectionMultiplePointException;
+use GT\DomTemplate\PartialInjectionPointNotFoundException;
+use GT\DomTemplate\Test\TestHelper\HTMLPageContent;
 
 class PartialExpanderTest extends PartialContentTestCase {
 	public function testExpand_noMatchingPartial():void {

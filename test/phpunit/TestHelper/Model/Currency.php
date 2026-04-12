@@ -1,5 +1,5 @@
 <?php
-namespace Gt\DomTemplate\Test\TestHelper\Model;
+namespace GT\DomTemplate\Test\TestHelper\Model;
 
 enum Currency {
 	case USD;

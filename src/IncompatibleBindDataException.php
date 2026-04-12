@@ -1,5 +1,5 @@
 <?php
-namespace Gt\DomTemplate;
+namespace GT\DomTemplate;
 
 class IncompatibleBindDataException extends DomTemplateException {
 

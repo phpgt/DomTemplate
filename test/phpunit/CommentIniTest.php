@@ -1,10 +1,10 @@
 <?php
-namespace Gt\DomTemplate\Test;
+namespace GT\DomTemplate\Test;
 
 use Gt\Dom\HTMLDocument;
-use Gt\DomTemplate\CommentIni;
-use Gt\DomTemplate\CommentIniInvalidDocumentLocationException;
-use Gt\DomTemplate\Test\TestHelper\HTMLPageContent;
+use GT\DomTemplate\CommentIni;
+use GT\DomTemplate\CommentIniInvalidDocumentLocationException;
+use GT\DomTemplate\Test\TestHelper\HTMLPageContent;
 use PHPUnit\Framework\TestCase;
 
 class CommentIniTest extends TestCase {

@@ -1,9 +1,9 @@
 <?php
-namespace Gt\DomTemplate\Test;
+namespace GT\DomTemplate\Test;
 
 use Gt\Dom\HTMLDocument;
-use Gt\DomTemplate\ComponentExpander;
-use Gt\DomTemplate\Test\TestHelper\HTMLPageContent;
+use GT\DomTemplate\ComponentExpander;
+use GT\DomTemplate\Test\TestHelper\HTMLPageContent;
 
 class ComponentExpanderTest extends PartialContentTestCase {
 	public function testExpand_doesNothingWhenNoMatchingFiles():void {

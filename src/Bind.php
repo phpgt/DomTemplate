@@ -1,5 +1,5 @@
 <?php /** @noinspection PhpPropertyOnlyWrittenInspection */
-namespace Gt\DomTemplate;
+namespace GT\DomTemplate;
 
 use Attribute;
 

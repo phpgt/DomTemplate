@@ -54,7 +54,7 @@ $html = file_get_contents("greeter.html");
 $document = new \Gt\Dom\HTMLDocument($html);
 
 if($name = $_GET["name"]) {
-	$binder = new \Gt\DomTemplate\DocumentBinder($document);
+	$binder = new \GT\DomTemplate\DocumentBinder($document);
 	$binder->bindKeyValue("name-output", $name);
 }
 
@@ -91,7 +91,7 @@ $shoppingList = [
 	"Vegetables",
 ];
 
-$binder = new \Gt\DomTemplate\DocumentBinder($document);
+$binder = new \GT\DomTemplate\DocumentBinder($document);
 $binder->bindList($shoppingList);
 // this removes the data-bind and data-template attributes:
 $binder->cleanupDocument(); 
@@ -166,7 +166,7 @@ $data = [
 
 $html = file_get_contents("user-list.html");
 $document = new \Gt\Dom\HTMLDocument($html);
-$binder = new \Gt\DomTemplate\DocumentBinder($document);
+$binder = new \GT\DomTemplate\DocumentBinder($document);
 
 $binder->bindList($data);
 $binder->cleanupDocument();

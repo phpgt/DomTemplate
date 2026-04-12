@@ -1,14 +1,14 @@
 <?php
-namespace Gt\DomTemplate\Test;
+namespace GT\DomTemplate\Test;
 
-use Gt\DomTemplate\Bind;
-use Gt\DomTemplate\BindGetter;
-use Gt\DomTemplate\BindableCache;
-use Gt\DomTemplate\BindGetterMethodDoesNotStartWithGetException;
-use Gt\DomTemplate\Test\TestHelper\Model\Address;
-use Gt\DomTemplate\Test\TestHelper\Model\Customer;
-use Gt\DomTemplate\Test\TestHelper\Model\Order;
-use Gt\DomTemplate\Test\TestHelper\TestData;
+use GT\DomTemplate\Bind;
+use GT\DomTemplate\BindGetter;
+use GT\DomTemplate\BindableCache;
+use GT\DomTemplate\BindGetterMethodDoesNotStartWithGetException;
+use GT\DomTemplate\Test\TestHelper\Model\Address;
+use GT\DomTemplate\Test\TestHelper\Model\Customer;
+use GT\DomTemplate\Test\TestHelper\Model\Order;
+use GT\DomTemplate\Test\TestHelper\TestData;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 
@@ -221,7 +221,7 @@ class BindableCacheTest extends TestCase {
 			"Apt 4",
 			"Example City",
 			"AB1 2CD",
-			new \Gt\DomTemplate\Test\TestHelper\Model\Country("GB"),
+			new \GT\DomTemplate\Test\TestHelper\Model\Country("GB"),
 		);
 		$object = new class($address) {
 			public function __construct(private readonly Address $address) {}

@@ -1,11 +1,11 @@
 <?php
-namespace Gt\DomTemplate\Test;
+namespace GT\DomTemplate\Test;
 
 use Gt\Dom\HTMLDocument;
-use Gt\DomTemplate\PartialContent;
-use Gt\DomTemplate\PartialContentDirectoryNotFoundException;
-use Gt\DomTemplate\PartialContentFileNotFoundException;
-use Gt\DomTemplate\Test\TestHelper\HTMLPageContent;
+use GT\DomTemplate\PartialContent;
+use GT\DomTemplate\PartialContentDirectoryNotFoundException;
+use GT\DomTemplate\PartialContentFileNotFoundException;
+use GT\DomTemplate\Test\TestHelper\HTMLPageContent;
 use PHPUnit\Framework\TestCase;
 
 class PartialContentTest extends TestCase {

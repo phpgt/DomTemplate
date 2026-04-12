@@ -1,7 +1,7 @@
 <?php
 use Gt\Dom\HTMLDocument;
-use Gt\DomTemplate\Bind;
-use Gt\DomTemplate\DocumentBinder;
+use GT\DomTemplate\Bind;
+use GT\DomTemplate\DocumentBinder;
 
 require __DIR__ . "/../../vendor/autoload.php";
 

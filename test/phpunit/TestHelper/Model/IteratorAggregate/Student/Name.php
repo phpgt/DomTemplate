@@ -1,5 +1,5 @@
 <?php
-namespace Gt\DomTemplate\Test\TestHelper\Model\IteratorAggregate\Student;
+namespace GT\DomTemplate\Test\TestHelper\Model\IteratorAggregate\Student;
 
 class Name {
 	public function __construct(

@@ -1,13 +1,13 @@
 <?php
-namespace Gt\DomTemplate\Test\TestHelper;
+namespace GT\DomTemplate\Test\TestHelper;
 
-use Gt\DomTemplate\Test\TestHelper\Model\Address;
-use Gt\DomTemplate\Test\TestHelper\Model\Country;
-use Gt\DomTemplate\Test\TestHelper\Model\Currency;
-use Gt\DomTemplate\Test\TestHelper\Model\Customer;
-use Gt\DomTemplate\Test\TestHelper\Model\Money;
-use Gt\DomTemplate\Test\TestHelper\Model\Order;
-use Gt\DomTemplate\Test\TestHelper\Model\ShopItem;
+use GT\DomTemplate\Test\TestHelper\Model\Address;
+use GT\DomTemplate\Test\TestHelper\Model\Country;
+use GT\DomTemplate\Test\TestHelper\Model\Currency;
+use GT\DomTemplate\Test\TestHelper\Model\Customer;
+use GT\DomTemplate\Test\TestHelper\Model\Money;
+use GT\DomTemplate\Test\TestHelper\Model\Order;
+use GT\DomTemplate\Test\TestHelper\Model\ShopItem;
 
 class TestData {
 	const MUSIC = [
