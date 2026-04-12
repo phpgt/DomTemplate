@@ -3,6 +3,7 @@ namespace Gt\DomTemplate;
 
 use Gt\Dom\Document;
 use Gt\Dom\Element;
+use Throwable;
 
 class ListElementCollection {
 	/** @var array<string, ListElement> */
@@ -68,6 +69,34 @@ class ListElementCollection {
 			"",
 			$contextPath
 		);
+
+		$matchedElement = null;
+		$matchedDepth = -1;
+		foreach($this->elementKVP as $name => $element) {
+			try {
+				$listItemParent = $element->getListItemParent();
+			}
+			catch(Throwable) {
+				continue;
+			}
+
+			if(!$listItemParent instanceof Element) {
+				continue;
+			}
+			if($listItemParent !== $context && !$context->contains($listItemParent)) {
+				continue;
+			}
+
+			$depth = substr_count((string)(new NodePathCalculator($listItemParent)), "/");
+			if($depth > $matchedDepth) {
+				$matchedElement = $element;
+				$matchedDepth = $depth;
+			}
+		}
+
+		if($matchedElement) {
+			return $matchedElement;
+		}
 
 		foreach($this->elementKVP as $name => $element) {
 			if($contextPath === $name) {

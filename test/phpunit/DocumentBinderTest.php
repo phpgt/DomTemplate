@@ -12,6 +12,8 @@ use Gt\DomTemplate\Bind;
 use Gt\DomTemplate\BindableCache;
 use Gt\DomTemplate\BindGetter;
 use Gt\DomTemplate\BindValue;
+use Gt\DomTemplate\ComponentBinder;
+use Gt\DomTemplate\ComponentExpander;
 use Gt\DomTemplate\DocumentBinder;
 use Gt\DomTemplate\ElementBinder;
 use Gt\DomTemplate\HTMLAttributeBinder;
@@ -20,6 +22,7 @@ use Gt\DomTemplate\IncompatibleBindDataException;
 use Gt\DomTemplate\InvalidBindPropertyException;
 use Gt\DomTemplate\ListBinder;
 use Gt\DomTemplate\ListElementCollection;
+use Gt\DomTemplate\PartialContent;
 use Gt\DomTemplate\PlaceholderBinder;
 use Gt\DomTemplate\TableBinder;
 use Gt\DomTemplate\TableElementNotFoundInContextException;
@@ -35,7 +38,7 @@ use IteratorAggregate;
 use Traversable;
 use ArrayIterator;
 
-class DocumentBinderTest extends TestCase {
+class DocumentBinderTest extends PartialContentTestCase {
 	/**
 	 * If the developer forgets to add a bind property (the bit after the
 	 * colon in `data-bind:text`, we should let them know with a friendly
@@ -1823,24 +1826,28 @@ PHP);
 
 	public function testBindListCallback_stringContext():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_COMPONENT_WITH_ATTRIBUTE_NESTED);
+		$documentElement = $document->documentElement;
 		$subComponent1 = $document->querySelector("#subcomponent-1");
 		$subComponent2 = $document->querySelector("#subcomponent-2");
 
 		$listBinder = self::createMock(ListBinder::class);
-		$bindMatcher = self::exactly(2);
+		$bindMatcher = self::exactly(3);
 		$listBinder->expects($bindMatcher)
 			->method("bindListData")
 			->willReturnCallback(function(
 				array $listData,
 				Element|Document $context,
-				?string $templateName,
-				?callable $callback,
-			)use($bindMatcher, $subComponent1, $subComponent2):int {
+				?string $templateName = null,
+				?callable $callback = null,
+			) use($bindMatcher, $documentElement, $subComponent1, $subComponent2):int {
 				match($bindMatcher->numberOfInvocations()) {
-					1 => self::assertEquals([["A"], $subComponent1], [$listData, $context]),
-					2 => self::assertEquals([["B"], $subComponent2], [$listData, $context]),
+					1 => self::assertEquals([["List", "for", "component 2"], $subComponent2], [$listData, $context]),
+					2 => self::assertEquals([["List", "for", "component 1"], $subComponent1], [$listData, $context]),
+					3 => self::assertEquals([["List", "for", "main component"], $documentElement], [$listData, $context]),
 				};
-				self::assertNotNull($callback);
+				self::assertNull($templateName);
+				self::assertIsCallable($callback);
+
 				return 0;
 			});
 
@@ -1854,9 +1861,10 @@ PHP);
 			self::createStub(BindableCache::class),
 		);
 
-		$callback = fn(Element $template, mixed $listItem, int|string $key):mixed => $listItem;
-		$sut->bindListCallback(["A"], $callback, "#subcomponent-1");
-		$sut->bindListCallback(["B"], $callback, $subComponent2);
+		$callback = static fn(Element $template, array $row):array => $row;
+		$sut->bindListCallback(["List", "for", "component 2"], $callback, "#subcomponent-2");
+		$sut->bindListCallback(["List", "for", "component 1"], $callback, "#subcomponent-1");
+		$sut->bindListCallback(["List", "for", "main component"], $callback);
 	}
 
 	public function testBindValue_stringContext():void {
@@ -1961,6 +1969,111 @@ PHP);
 			"statusMessage" => "Ready",
 		]);
 		return "test/phpunit/DocumentBinderTest.php:$line";
+	}
+
+	public function testBindList_multipleComponent():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_PAGE_WITH_TWO_LIST_COMPONENTS);
+		$componentExpander = new ComponentExpander(
+			$document,
+			self::mockPartialContent(
+				"_component",
+				[
+					"global-header" => HTMLPageContent::HTML_GLOBAL_HEADER,
+					"simple-list" => HTMLPageContent::HTML_SIMPLE_LIST,
+				]
+			)
+		);
+		$componentExpander->expand();
+		$dependencies = $this->documentBinderDependencies($document);
+
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$dependencies);
+
+		$linkList = [
+			["name" => "First link", "link" => "/1"],
+			["name" => "Second link", "link" => "/2"],
+			["name" => "Third link", "link" => "/3"],
+		];
+		$peopleList = [
+			"active" => [
+				["name" => "Andrew"],
+				["name" => "Becca"],
+			],
+			"inactive" => [
+				["name" => "Charlie"],
+				["name" => "Devi"],
+				["name" => "Elle"],
+				["name" => "Frankie"],
+			],
+		];
+
+		$globalHeaderEl = $document->querySelector("global-header");
+		[$simpleListEl1, $simpleListEl2] = iterator_to_array($document->querySelectorAll("simple-list"));
+
+		$globalheaderBinder = new ComponentBinder($document);
+		$globalheaderBinder->setDependencies(...$dependencies);
+		$globalheaderBinder->setComponentBinderDependencies($globalHeaderEl);
+		$globalheaderBinder->bindList($linkList);
+
+		$simpleListBinder1 = new ComponentBinder($document);
+		$simpleListBinder1->setDependencies(...$dependencies);
+		$simpleListBinder1->setComponentBinderDependencies($simpleListEl1);
+		$simpleListBinder1->bindList($peopleList["active"]);
+
+		$simpleListBinder2 = new ComponentBinder($document);
+		$simpleListBinder2->setDependencies(...$dependencies);
+		$simpleListBinder2->setComponentBinderDependencies($simpleListEl2);
+		$simpleListBinder2->bindList($peopleList["inactive"]);
+
+		self::assertCount(3, $globalHeaderEl->querySelectorAll("a"));
+		self::assertCount(2, $simpleListEl1->querySelectorAll("li"));
+		self::assertCount(4, $simpleListEl2->querySelectorAll("li"));
+	}
+
+	public function testBindListCallback_multipleComponent():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_PAGE_WITH_TWO_LIST_COMPONENTS);
+		$componentExpander = new ComponentExpander(
+			$document,
+			self::mockPartialContent(
+				"_component",
+				[
+					"global-header" => HTMLPageContent::HTML_GLOBAL_HEADER,
+					"simple-list" => HTMLPageContent::HTML_SIMPLE_LIST,
+				]
+			)
+		);
+		$componentExpander->expand();
+		$dependencies = $this->documentBinderDependencies($document);
+
+		[$simpleListEl1, $simpleListEl2] = iterator_to_array($document->querySelectorAll("simple-list"));
+		$callback = fn(Element $template, array $row):array => $row;
+
+		$simpleListBinder1 = new ComponentBinder($document);
+		$simpleListBinder1->setDependencies(...$dependencies);
+		$simpleListBinder1->setComponentBinderDependencies($simpleListEl1);
+		$simpleListBinder1->bindListCallback(
+			[
+				["name" => "Andrew"],
+				["name" => "Becca"],
+			],
+			$callback,
+		);
+
+		$simpleListBinder2 = new ComponentBinder($document);
+		$simpleListBinder2->setDependencies(...$dependencies);
+		$simpleListBinder2->setComponentBinderDependencies($simpleListEl2);
+		$simpleListBinder2->bindListCallback(
+			[
+				["name" => "Charlie"],
+				["name" => "Devi"],
+				["name" => "Elle"],
+				["name" => "Frankie"],
+			],
+			$callback,
+		);
+
+		self::assertCount(2, $simpleListEl1->querySelectorAll("li"));
+		self::assertCount(4, $simpleListEl2->querySelectorAll("li"));
 	}
 
 	private function documentBinderDependencies(HTMLDocument $document, mixed...$otherObjectList):array {

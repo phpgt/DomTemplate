@@ -30,6 +30,26 @@ class ComponentBinder extends DocumentBinder {
 		return parent::bindList($listData, $context, $templateName);
 	}
 
+	public function bindListCallback(
+		iterable $listData,
+		callable $callback,
+		null|string|Element $context = null,
+		?string $templateName = null
+	):int {
+		if(is_string($context)) {
+			$context = $this->stringToContext($context);
+		}
+
+		if($context) {
+			$this->checkElementContainedWithinComponent($context);
+		}
+		else {
+			$context = $this->componentElement;
+		}
+
+		return parent::bindListCallback($listData, $callback, $context, $templateName);
+	}
+
 	protected function bind(
 		?string $key,
 		mixed $value,

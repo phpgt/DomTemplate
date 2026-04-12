@@ -7,6 +7,7 @@ use Gt\DomTemplate\ElementBinder;
 use Gt\DomTemplate\HTMLAttributeBinder;
 use Gt\DomTemplate\HTMLAttributeCollection;
 use Gt\DomTemplate\ListBinder;
+use Gt\DomTemplate\ListElement;
 use Gt\DomTemplate\ListElementCollection;
 use Gt\DomTemplate\ListElementNotFoundInContextException;
 use Gt\DomTemplate\PlaceholderBinder;
@@ -158,6 +159,33 @@ class ListElementCollectionTest extends TestCase {
 		$listElement->insertListItem();
 		self::assertCount(4, $ulChildren);
 		self::assertSame("This list item will always show at the end", $ulChildren[3]->textContent);
+	}
+
+	public function testGet_noName_fallsBackToPathMatchingWhenListParentDetached():void {
+		$document = new HTMLDocument(
+			"<!doctype html><html><body><section id='target'><ul></ul></section></body></html>"
+		);
+		$sut = new ListElementCollection($document);
+		$nonElementParent = self::createMock(ListElement::class);
+		$nonElementParent->method("getListItemParent")
+			->willReturn(self::createStub(\Gt\Dom\Node::class));
+		$listElement = self::createMock(ListElement::class);
+		$listElement->method("getListItemParent")
+			->willThrowException(new \TypeError("Detached"));
+
+		$reflection = new \ReflectionProperty($sut, "elementKVP");
+		$reflection->setValue(
+			$sut,
+			[
+				"/html/body/aside/span" => $nonElementParent,
+				"/html/body/section[@id='target']/ul" => $listElement,
+			]
+		);
+
+		self::assertSame(
+			$listElement,
+			$sut->get($document->querySelector("#target"))
+		);
 	}
 
 	private function elementBinderDependencies(HTMLDocument $document, mixed...$otherObjectList):array {

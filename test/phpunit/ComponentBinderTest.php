@@ -180,6 +180,50 @@ class ComponentBinderTest extends TestCase {
 		$sut->bindList(["List", "for", "main component"]);
 	}
 
+	public function testBindListCallback_stringContext():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_COMPONENT_WITH_ATTRIBUTE_NESTED);
+		$componentElement = $document->querySelector("example-component");
+		$subComponent1 = $document->querySelector("#subcomponent-1");
+		$subComponent2 = $document->querySelector("#subcomponent-2");
+
+		$listBinder = self::createMock(ListBinder::class);
+		$bindMatcher = self::exactly(3);
+		$listBinder->expects($bindMatcher)
+			->method("bindListData")
+			->willReturnCallback(function(
+				array $listData,
+				Element $context,
+				?string $templateName = null,
+				?callable $callback = null,
+			) use($bindMatcher, $componentElement, $subComponent1, $subComponent2):int {
+				match($bindMatcher->numberOfInvocations()) {
+					1 => self::assertEquals([["List", "for", "component 2"], $subComponent2], [$listData, $context]),
+					2 => self::assertEquals([["List", "for", "component 1"], $subComponent1], [$listData, $context]),
+					3 => self::assertEquals([["List", "for", "main component"], $componentElement], [$listData, $context]),
+				};
+				self::assertNull($templateName);
+				self::assertIsCallable($callback);
+
+				return 0;
+			});
+
+		$sut = new ComponentBinder($document);
+		$sut->setDependencies(
+			self::createStub(ElementBinder::class),
+			self::createStub(PlaceholderBinder::class),
+			self::createStub(TableBinder::class),
+			$listBinder,
+			self::createStub(ListElementCollection::class),
+			self::createStub(BindableCache::class),
+		);
+		$sut->setComponentBinderDependencies($componentElement);
+
+		$callback = static fn(Element $template, array $row):array => $row;
+		$sut->bindListCallback(["List", "for", "component 2"], $callback, "#subcomponent-2");
+		$sut->bindListCallback(["List", "for", "component 1"], $callback, "#subcomponent-1");
+		$sut->bindListCallback(["List", "for", "main component"], $callback);
+	}
+
 	public function testBindValue_stringContext():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_COMPONENT_WITH_ATTRIBUTE_NESTED);
 		$componentElement = $document->querySelector("example-component");
