@@ -111,6 +111,18 @@ class HTMLAttributeBinderTest extends TestCase {
 		self::assertTrue($div->classList->contains("compact"));
 	}
 
+	public function testBind_classProperty_iterableIgnoresNonStringableValues():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_MULTI_CLASS_BINDING);
+		$sut = new HTMLAttributeBinder();
+		$div = $document->getElementById("div1");
+
+		$sut->bind("statusClasses", ["featured", new \stdClass(), "compact"], $div);
+
+		self::assertTrue($div->classList->contains("featured"));
+		self::assertTrue($div->classList->contains("compact"));
+		self::assertFalse($div->classList->contains("stdClass"));
+	}
+
 	public function testBind_modifierColon_multipleExplicitClassNames():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_MULTI_CLASS_BINDING);
 		$sut = new HTMLAttributeBinder();
