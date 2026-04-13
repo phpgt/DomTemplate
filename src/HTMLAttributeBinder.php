@@ -166,6 +166,7 @@ class HTMLAttributeBinder {
 		return substr($attributeName, strpos($attributeName, ":") + 1);
 	}
 
+	/** @return array{0:string|false|null, 1:array<int, string>} */
 	private function resolveModifier(
 		?string $key,
 		string $attributeValue,
