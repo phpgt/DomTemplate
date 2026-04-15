@@ -87,6 +87,113 @@ class HTMLAttributeBinderTest extends TestCase {
 		self::assertTrue($img->classList->contains("size-large"));
 	}
 
+	public function testBind_classProperty_multipleClassNamesFromString():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_MULTI_CLASS_BINDING);
+		$sut = new HTMLAttributeBinder();
+		$div = $document->getElementById("div1");
+
+		$sut->bind("statusClasses", "featured promoted", $div);
+
+		self::assertTrue($div->classList->contains("panel"));
+		self::assertTrue($div->classList->contains("featured"));
+		self::assertTrue($div->classList->contains("promoted"));
+	}
+
+	public function testBind_classProperty_multipleClassNamesFromIterable():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_MULTI_CLASS_BINDING);
+		$sut = new HTMLAttributeBinder();
+		$div = $document->getElementById("div1");
+
+		$sut->bind("statusClasses", ["featured promoted", "compact"], $div);
+
+		self::assertTrue($div->classList->contains("featured"));
+		self::assertTrue($div->classList->contains("promoted"));
+		self::assertTrue($div->classList->contains("compact"));
+	}
+
+	public function testBind_classProperty_iterableIgnoresNonStringableValues():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_MULTI_CLASS_BINDING);
+		$sut = new HTMLAttributeBinder();
+		$div = $document->getElementById("div1");
+
+		$sut->bind("statusClasses", ["featured", new \stdClass(), "compact"], $div);
+
+		self::assertTrue($div->classList->contains("featured"));
+		self::assertTrue($div->classList->contains("compact"));
+		self::assertFalse($div->classList->contains("stdClass"));
+	}
+
+	public function testBind_modifierColon_multipleExplicitClassNames():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_MULTI_CLASS_BINDING);
+		$sut = new HTMLAttributeBinder();
+		$div = $document->getElementById("div2");
+
+		$sut->bind("isSelected", true, $div);
+
+		self::assertTrue($div->classList->contains("selected-image"));
+		self::assertTrue($div->classList->contains("featured"));
+	}
+
+	public function testBind_modifierColon_usesBoundValueWhenNoExplicitClassNames():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_MULTI_CLASS_BINDING);
+		$sut = new HTMLAttributeBinder();
+		$div = $document->getElementById("div3");
+
+		$sut->bind("statusClasses", "featured promoted", $div);
+
+		self::assertTrue($div->classList->contains("featured"));
+		self::assertTrue($div->classList->contains("promoted"));
+	}
+
+	public function testBind_modifierColon_removesMultipleClassNamesAtOnce():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_MULTI_CLASS_BINDING);
+		$sut = new HTMLAttributeBinder();
+		$div = $document->getElementById("div2");
+		$div->classList->add("selected-image");
+		$div->classList->add("featured");
+
+		$sut->bind("isSelected", false, $div);
+
+		self::assertFalse($div->classList->contains("selected-image"));
+		self::assertFalse($div->classList->contains("featured"));
+	}
+
+	public function testBind_modifierColon_multipleExpressionsCanBeBundled():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_MULTI_CLASS_BINDING);
+		$sut = new HTMLAttributeBinder();
+		$div = $document->getElementById("div4");
+
+		$sut->bind("isSelected", true, $div);
+		$sut->bind("isAdmin", true, $div);
+
+		self::assertTrue($div->classList->contains("selected"));
+		self::assertTrue($div->classList->contains("admin"));
+	}
+
+	public function testBind_modifierBundle_preservesRemainingExpressionsWithoutRebind():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_MULTI_CLASS_BINDING);
+		$sut = new HTMLAttributeBinder();
+		$div = $document->getElementById("div4");
+
+		$sut->bind("isSelected", true, $div);
+
+		self::assertSame(":isAdmin admin", $div->getAttribute("data-bind:class"));
+	}
+
+	public function testBind_modifierQuestion_multipleExpressionsCanBeBundled():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_MULTI_CLASS_BINDING);
+		$sut = new HTMLAttributeBinder();
+		$button = $document->getElementById("btn3");
+
+		$sut->bind("isBusy", false, $button);
+		self::assertSame("?isLocked", $button->getAttribute("data-bind:disabled"));
+		self::assertFalse($button->disabled);
+
+		$sut->bind("isLocked", true, $button);
+		self::assertTrue($button->disabled);
+		self::assertFalse($button->hasAttribute("data-bind:disabled"));
+	}
+
 	public function testBind_modifierQuestion():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_DIFFERENT_BIND_PROPERTIES);
 		$sut = new HTMLAttributeBinder();
