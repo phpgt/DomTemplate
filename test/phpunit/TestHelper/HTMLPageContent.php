@@ -205,6 +205,8 @@ HTML;
 
 <div id="div2" class="panel" data-bind:class="!:show hidden" data-rebind></div>
 
+<div id="div3" class="panel" data-bind:class=":!show" data-rebind></div>
+
 <button id="btn1" data-bind:disabled="?!isEnabled" data-rebind></button>
 
 <button id="btn2" data-bind:disabled="!?isEnabled" data-rebind></button>

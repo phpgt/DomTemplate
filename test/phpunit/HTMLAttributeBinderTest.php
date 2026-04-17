@@ -182,6 +182,18 @@ class HTMLAttributeBinderTest extends TestCase {
 		self::assertFalse($div->classList->contains("hidden"));
 	}
 
+	public function testBind_modifierColon_inverseLogic_usesBindKeyWhenNoExplicitTokenNames():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_INVERSE_MODIFIER_BINDING);
+		$sut = new HTMLAttributeBinder();
+		$div = $document->getElementById("div3");
+
+		$sut->bind("show", false, $div);
+		self::assertTrue($div->classList->contains("show"));
+
+		$sut->bind("show", true, $div);
+		self::assertFalse($div->classList->contains("show"));
+	}
+
 	public function testBind_modifierColon_multipleExpressionsCanBeBundled():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_MULTI_CLASS_BINDING);
 		$sut = new HTMLAttributeBinder();
@@ -254,6 +266,20 @@ class HTMLAttributeBinderTest extends TestCase {
 
 		$sut->bind("isEnabled", true, $button);
 		self::assertFalse($button->disabled);
+	}
+
+	public function testGetModifierType_withoutTokenOrBooleanModifier_returnsFirstCharacter():void {
+		$sut = new HTMLAttributeBinder();
+		$method = new \ReflectionMethod($sut, "getModifierType");
+
+		self::assertSame("!", $method->invoke($sut, "!show"));
+	}
+
+	public function testGetModifierBody_withoutLeadingTokenOrBooleanModifier_trimsPrefixCharacter():void {
+		$sut = new HTMLAttributeBinder();
+		$method = new \ReflectionMethod($sut, "getModifierBody");
+
+		self::assertSame("show", $method->invoke($sut, "!show"));
 	}
 
 	public function testBind_modifierQuestion_withNullValue():void {
