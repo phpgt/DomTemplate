@@ -390,8 +390,8 @@ class HTMLAttributeBinder {
 		string $modifier,
 		mixed $bindValue
 	):void {
-		$modifierChar = $modifier[0];
-		$modifierValue = substr($modifier, 1);
+		$modifierChar = $this->getModifierType($modifier);
+		$modifierValue = $this->getModifierBody($modifier);
 		$condition = null;
 		if(false !== $spacePos = strpos($modifierValue, " ")) {
 			$modifierValue = substr($modifierValue, $spacePos + 1);
@@ -409,6 +409,9 @@ class HTMLAttributeBinder {
 		case ":":
 			$tokenList = $this->getTokenList($element, $attribute);
 			$tokenNames = $this->resolveTokenNames($modifier, $bindValue);
+			if($this->isInverseModifier($modifier)) {
+				$bindValue = !$bindValue;
+			}
 			if($bindValue) {
 				$tokenList->add(...$tokenNames);
 			}
@@ -418,7 +421,7 @@ class HTMLAttributeBinder {
 			break;
 
 		case "?":
-			if($modifierValue[0] === "!") {
+			if($this->isInverseModifier($modifier)) {
 				$bindValue = !$bindValue;
 			}
 
@@ -463,8 +466,7 @@ class HTMLAttributeBinder {
 	}
 
 	private function extractModifierExpression(string $modifier):string {
-		$modifierValue = substr($modifier, 1);
-		$modifierValue = ltrim($modifierValue, "!");
+		$modifierValue = $this->getModifierBody($modifier);
 		return strtok($modifierValue, " ") ?: "";
 	}
 
@@ -485,14 +487,37 @@ class HTMLAttributeBinder {
 
 	/** @return array<int, string> */
 	private function extractModifierTokens(string $modifier):array {
-		$modifierValue = substr($modifier, 1);
-		$modifierValue = ltrim($modifierValue, "!");
+		$modifierValue = $this->getModifierBody($modifier);
 		$spacePos = strpos($modifierValue, " ");
 		if($spacePos === false) {
 			return [];
 		}
 
 		return $this->prepareTokenListValues(substr($modifierValue, $spacePos + 1));
+	}
+
+	private function getModifierType(string $modifier):string {
+		foreach(str_split($modifier) as $char) {
+			if($char === ":" || $char === "?") {
+				return $char;
+			}
+		}
+
+		return $modifier[0];
+	}
+
+	private function isInverseModifier(string $modifier):bool {
+		return str_contains($modifier, "!");
+	}
+
+	private function getModifierBody(string $modifier):string {
+		$modifierType = $this->getModifierType($modifier);
+		$modifierValue = ltrim($modifier, "!");
+		if(str_starts_with($modifierValue, $modifierType)) {
+			return ltrim(substr($modifierValue, 1), "!");
+		}
+
+		return ltrim(substr($modifier, 1), "!");
 	}
 
 	private function extractCondition(string $bindExpression):?string {

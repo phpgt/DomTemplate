@@ -199,6 +199,19 @@ const HTML_MULTI_CLASS_BINDING = <<<HTML
 <button id="btn3" data-bind:disabled="?isBusy; ?isLocked"></button>
 HTML;
 
+	const HTML_INVERSE_MODIFIER_BINDING = <<<HTML
+<!doctype html>
+<div id="div1" class="panel" data-bind:class=":!show hidden" data-rebind></div>
+
+<div id="div2" class="panel" data-bind:class="!:show hidden" data-rebind></div>
+
+<div id="div3" class="panel" data-bind:class=":!show" data-rebind></div>
+
+<button id="btn1" data-bind:disabled="?!isEnabled" data-rebind></button>
+
+<button id="btn2" data-bind:disabled="!?isEnabled" data-rebind></button>
+HTML;
+
 	const HTML_SIMPLE_BOOLEAN = <<<HTML
 <!doctype html>
 
