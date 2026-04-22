@@ -76,27 +76,22 @@ class TableBinder {
 		Element $context,
 		?string $bindKey,
 	):array {
-		$tableArray = $this->collectTables($context);
+		if($context->elementType === ElementType::HTMLTableElement) {
+			$tableArray = [$context];
+		}
+		else {
+			$tableArray = [];
+			foreach($context->querySelectorAll("table") as $table) {
+				$tableArray[] = $table;
+			}
+		}
+
 		return array_values(
 			array_filter(
 				$tableArray,
 				fn(Element $table):bool => $this->tableMatchesBindKey($table, $bindKey),
 			)
 		);
-	}
-
-	/** @return array<int, Element> */
-	private function collectTables(Element $context):array {
-		if($context->elementType === ElementType::HTMLTableElement) {
-			return [$context];
-		}
-
-		$tableArray = [];
-		foreach($context->querySelectorAll("table") as $table) {
-			$tableArray[] = $table;
-		}
-
-		return $tableArray;
 	}
 
 	private function tableMatchesBindKey(Element $table, ?string $bindKey):bool {
@@ -129,7 +124,16 @@ class TableBinder {
 		$allowedHeaders = $this->resolveAllowedHeaders($table, $headerRow);
 		$tableBody = $table->tBodies[0] ?? $table->createTBody();
 		$rowFragment = $table->ownerDocument->createDocumentFragment();
-		$debugEnabled = $this->hasDebugAncestor($tableBody);
+		$debugEnabled = false;
+		$currentElement = $tableBody;
+		while($currentElement) {
+			if($currentElement->hasAttribute("data-bind-debug")) {
+				$debugEnabled = true;
+				break;
+			}
+
+			$currentElement = $currentElement->parentElement;
+		}
 
 		foreach($tableData as $rowData) {
 			$this->bindRowData(
@@ -625,18 +629,5 @@ class TableBinder {
 				? $entry
 				: $current . "," . $entry
 		);
-	}
-
-	private function hasDebugAncestor(Element $element):bool {
-		$currentElement = $element;
-		while($currentElement) {
-			if($currentElement->hasAttribute("data-bind-debug")) {
-				return true;
-			}
-
-			$currentElement = $currentElement->parentElement;
-		}
-
-		return false;
 	}
 }
