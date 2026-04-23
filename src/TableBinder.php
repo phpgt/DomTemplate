@@ -67,9 +67,7 @@ class TableBinder {
 
 		$headerRow = array_shift($tableData);
 		foreach($tableArray as $table) {
-			foreach($tableData as $rowData) {
-				$this->bindRowData($table, $context, $headerRow, $rowData, $tableData);
-			}
+			$this->bindTableRows($table, $context, $headerRow, $tableData);
 		}
 	}
 
@@ -78,27 +76,22 @@ class TableBinder {
 		Element $context,
 		?string $bindKey,
 	):array {
-		$tableArray = $this->collectTables($context);
+		if($context->elementType === ElementType::HTMLTableElement) {
+			$tableArray = [$context];
+		}
+		else {
+			$tableArray = [];
+			foreach($context->querySelectorAll("table") as $table) {
+				$tableArray[] = $table;
+			}
+		}
+
 		return array_values(
 			array_filter(
 				$tableArray,
 				fn(Element $table):bool => $this->tableMatchesBindKey($table, $bindKey),
 			)
 		);
-	}
-
-	/** @return array<int, Element> */
-	private function collectTables(Element $context):array {
-		if($context->elementType === ElementType::HTMLTableElement) {
-			return [$context];
-		}
-
-		$tableArray = [];
-		foreach($context->querySelectorAll("table") as $table) {
-			$tableArray[] = $table;
-		}
-
-		return $tableArray;
 	}
 
 	private function tableMatchesBindKey(Element $table, ?string $bindKey):bool {
@@ -121,20 +114,69 @@ class TableBinder {
 	/**
 	 * @param array<int, string> $headerRow
 	 * @param NormalisedTableData $tableData
-	 * @param TableRow|DoubleHeaderRow $rowData
 	 */
-	private function bindRowData(
+	private function bindTableRows(
 		Element $table,
 		Element $context,
 		array $headerRow,
-		array $rowData,
 		array $tableData,
 	):void {
 		$allowedHeaders = $this->resolveAllowedHeaders($table, $headerRow);
 		$tableBody = $table->tBodies[0] ?? $table->createTBody();
+		$rowFragment = $table->ownerDocument->createDocumentFragment();
+		$debugEnabled = false;
+		$currentElement = $tableBody;
+		while($currentElement) {
+			if($currentElement->hasAttribute("data-bind-debug")) {
+				$debugEnabled = true;
+				break;
+			}
+
+			$currentElement = $currentElement->parentElement;
+		}
+
+		foreach($tableData as $rowData) {
+			$this->bindRowData(
+				$tableBody,
+				$rowFragment,
+				$context,
+				$headerRow,
+				$allowedHeaders,
+				$debugEnabled,
+				$rowData,
+				$tableData,
+			);
+		}
+
+		$tableBody->append($rowFragment);
+	}
+
+	/**
+	 * @param array<int, string> $headerRow
+	 * @param NormalisedTableData $tableData
+	 * @param array<int, string> $allowedHeaders
+	 * @param TableRow|DoubleHeaderRow $rowData
+	 */
+	private function bindRowData(
+		Element $tableBody,
+		\Gt\Dom\DocumentFragment $rowFragment,
+		Element $context,
+		array $headerRow,
+		array $allowedHeaders,
+		bool $debugEnabled,
+		array $rowData,
+		array $tableData,
+	):void {
 		$tableRow = $this->createTableRow($context, $tableBody);
-		$this->populateTableCells($tableRow, $headerRow, $allowedHeaders, $rowData);
+		$this->populateTableCells(
+			$tableRow,
+			$headerRow,
+			$allowedHeaders,
+			$rowData,
+			$debugEnabled,
+		);
 		$this->bindRowValues($tableRow, $headerRow, $rowData, $tableData);
+		$rowFragment->appendChild($tableRow);
 	}
 
 	/**
@@ -177,11 +219,17 @@ class TableBinder {
 
 		try {
 			$tableRowTemplate = $templateCollection->get($tableBody);
-			return $tableRowTemplate->insertListItem();
+			$tableRow = $tableRowTemplate->getClone();
+			if($tableRow instanceof Element
+			&& strtolower($tableRow->tagName) !== "template") {
+				return $tableRow;
+			}
 		}
 		catch(ListElementNotFoundInContextException) {
-			return $tableBody->insertRow();
+			return $tableBody->ownerDocument->createElement("tr");
 		}
+
+		return $tableBody->ownerDocument->createElement("tr");
 	}
 
 	/**
@@ -194,6 +242,7 @@ class TableBinder {
 		array $headerRow,
 		array $allowedHeaders,
 		array $rowData,
+		bool $debugEnabled = false,
 	):void {
 		foreach($allowedHeaders as $headerIndex => $allowedHeader) {
 			$rowIndex = array_search($allowedHeader, $headerRow);
@@ -211,7 +260,7 @@ class TableBinder {
 			if(!$cellElement->parentElement) {
 				$tableRow->appendChild($cellElement);
 			}
-			$this->appendDebugInfo($cellElement, "text");
+			$this->appendDebugInfo($cellElement, "text", $debugEnabled);
 		}
 	}
 
@@ -549,21 +598,27 @@ class TableBinder {
 		);
 	}
 
-	private function appendDebugInfo(Element $element, string $bindProperty):void {
+	private function appendDebugInfo(
+		Element $element,
+		string $bindProperty,
+		bool $force = false,
+	):void {
 		if(!$this->debugSource) {
 			return;
 		}
 
-		$currentElement = $element;
-		while($currentElement) {
-			if($currentElement->hasAttribute("data-bind-debug")) {
-				break;
-			}
+		if(!$force) {
+			$currentElement = $element;
+			while($currentElement) {
+				if($currentElement->hasAttribute("data-bind-debug")) {
+					break;
+				}
 
-			$currentElement = $currentElement->parentElement;
-		}
-		if(!$currentElement) {
-			return;
+				$currentElement = $currentElement->parentElement;
+			}
+			if(!$currentElement) {
+				return;
+			}
 		}
 
 		$entry = $bindProperty . "=" . $this->debugSource;

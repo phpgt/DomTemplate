@@ -784,6 +784,90 @@ class TableBinderTest extends TestCase {
 		self::assertSame("text=app/Controller.php:10", $bodyCell->getAttribute("data-bind-debug"));
 	}
 
+	public function testBindTableData_debugSourceDoesNotAnnotateCellsOutsideDebugScope():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_TABLE_NO_BIND_KEY);
+		$sut = new TableBinder();
+		$sut->setDependencies(...$this->tablebinderDependencies($document));
+		$sut->setDebugSource("app/Controller.php:10");
+
+		$sut->bindTableData([
+			["Name", "Role"],
+			["Cody", "Maintainer"],
+		], $document);
+
+		foreach($document->querySelectorAll("td") as $cell) {
+			self::assertFalse($cell->hasAttribute("data-bind-debug"));
+		}
+	}
+
+	public function testBindTableData_templateElementRowTemplateFallsBackToGeneratedRows():void {
+		$document = new HTMLDocument(<<<HTML
+<!doctype html>
+<table>
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Role</th>
+		</tr>
+	</thead>
+	<tbody>
+		<template data-list>
+			<tr>
+				<td>Template name</td>
+				<td>Template role</td>
+			</tr>
+		</template>
+	</tbody>
+</table>
+HTML);
+		$sut = new TableBinder();
+		$sut->setDependencies(...$this->tablebinderDependencies($document));
+
+		$sut->bindTableData([
+			["Name", "Role"],
+			["Cody", "Maintainer"],
+			["Sarah", "Contributor"],
+		], $document);
+
+		$table = $document->querySelector("table");
+		self::assertCount(2, $table->tBodies[0]->rows);
+		self::assertSame("Cody", $table->tBodies[0]->rows[0]->cells[0]->textContent);
+		self::assertSame("Contributor", $table->tBodies[0]->rows[1]->cells[1]->textContent);
+		self::assertNull($table->querySelector("template"));
+	}
+
+	public function testCreateTableRowInitializesTemplateCollectionFallback():void {
+		$document = new HTMLDocument(<<<HTML
+<!doctype html>
+<table>
+	<tbody>
+		<tr data-list>
+			<td>Template</td>
+		</tr>
+	</tbody>
+</table>
+HTML);
+		$sut = new TableBinder();
+		$tableBody = $document->querySelector("tbody");
+
+		$method = new \ReflectionMethod($sut, "createTableRow");
+		$tableRow = $method->invoke($sut, $document->documentElement, $tableBody);
+
+		self::assertSame("tr", $tableRow->tagName);
+		self::assertSame("Template", $tableRow->cells[0]->textContent);
+	}
+
+	public function testResolveHeaderRowIndexDefaultsToFirstHeaderForUnknownStringKey():void {
+		$sut = new TableBinder();
+		$method = new \ReflectionMethod($sut, "resolveHeaderRowIndex");
+
+		$index = $method->invoke($sut, "missing", [
+			["known" => ["value"]],
+		]);
+
+		self::assertSame(0, $index);
+	}
+
 	private function tablebinderDependencies(HTMLDocument $document):array {
 		$htmlAttributeBinder = new HTMLAttributeBinder();
 		$htmlAttributeCollection = new HTMLAttributeCollection();
