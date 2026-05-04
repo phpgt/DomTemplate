@@ -1,6 +1,6 @@
 # Bind dynamic data to reusable HTML components.
 
-Built on top of [PHP.Gt/Dom][dom], this project provides dynamic data binding to DOM Documents, document templating and reusable HTML components.
+Built on top of [PHP.GT/Dom][dom], this project provides dynamic data binding to DOM Documents, document templating and reusable HTML components.
 
 Directly manipulating the DOM in your code can lead to tightly coupling the logic and view. Binding data using custom elements and data attributes leads to highly readable, maintainable view files that are loosely coupled to the application logic.  
 
@@ -51,7 +51,7 @@ The HTML below shows a basic "Hello, you" message, but due to the `data-bind:tex
 ```php
 <?php
 $html = file_get_contents("greeter.html");
-$document = new \Gt\Dom\HTMLDocument($html);
+$document = new \GT\Dom\HTMLDocument($html);
 
 if($name = $_GET["name"]) {
 	$binder = new \GT\DomTemplate\DocumentBinder($document);
@@ -81,7 +81,7 @@ Note: when binding an array of strings (or `Stringable` objects), there is no ne
 
 ```php
 $html = file_get_contents("shopping-list.html");
-$document = new \Gt\Dom\HTMLDocument($html);
+$document = new \GT\Dom\HTMLDocument($html);
 
 $shoppingList = [
 	"Pasta",
@@ -165,7 +165,7 @@ $data = [
 ];
 
 $html = file_get_contents("user-list.html");
-$document = new \Gt\Dom\HTMLDocument($html);
+$document = new \GT\Dom\HTMLDocument($html);
 $binder = new \GT\DomTemplate\DocumentBinder($document);
 
 $binder->bindList($data);
