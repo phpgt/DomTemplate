@@ -2040,6 +2040,33 @@ PHP);
 		self::assertCount(4, $simpleListEl2->querySelectorAll("li"));
 	}
 
+	public function testBindValue_textarea():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_TEXTAREA);
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+
+		$string = "This & that";
+		$sut->bindKeyValue("message", $string);
+		self::assertSame($string, $document->querySelector("textarea")->value);
+		self::assertSame($string, $document->querySelector("textarea")->innerText);
+	}
+
+	public function testBindValue_textarea_multiLine():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_TEXTAREA);
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+
+		$string = <<<TEXT
+		The Marlowe Theatre, Canterbury is one of the UK’s most successful large-scale regional theatres (UK Theatre of the Year in the Stage Awards 2022). Our mission is to be the engine house for the performing arts in Kent, shaping the spirit of our region.
+
+		We bring West End musicals, national companies, a symphony orchestra season and high-profile tours to Kent audiences, in a year-round programme of theatre, dance, opera, music and comedy in our 1,200-seat Main House. Our 150-seat Studio is dedicated to the development of new ideas, with a mix of R&D with resident and visiting companies, sharings and presented shows, plus a home-produced family show at Christmas.
+		TEXT;
+		$sut->bindKeyValue("message", $string);
+		self::assertSame($string, $document->querySelector("textarea")->value);
+		self::assertSame($string, $document->querySelector("textarea")->innerText);
+		self::assertSame($string, $document->querySelector("textarea")->innerHTML);
+	}
+
 	public function testBindListCallback_multipleComponent():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_PAGE_WITH_TWO_LIST_COMPONENTS);
 		$componentExpander = new ComponentExpander(

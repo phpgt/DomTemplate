@@ -1424,6 +1424,18 @@ HTML;
 </ul>
 HTML;
 
+	const HTML_TEXTAREA = <<<HTML
+<form method="post">
+	<label>
+		<span>Your name</span>
+		<input name="name" data-bind:value="@" required />
+	</label>
+	<label>
+		<span>Message</span>
+		<textarea name="message" data-bind:value="@" required></textarea>
+	</label>
+</form>
+HTML;
 
 
 	public static function createHTML(string $html = ""):HTMLDocument {
