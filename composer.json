@@ -5,7 +5,7 @@
 	"require": {
 		"php": ">=8.2",
 		"ext-dom": "*",
-		"phpgt/dom": "^4.1.9"
+		"phpgt/dom": "^4.2.1"
 	},
 	"require-dev": {
 		"phpstan/phpstan": "^2.1",
