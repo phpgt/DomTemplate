@@ -1424,6 +1424,29 @@ HTML;
 </ul>
 HTML;
 
+	const HTML_UNNAMED_LIST_WITH_DEEPER_NAMED_LIST = <<<HTML
+<!doctype html>
+<venue-listing>
+	<ul class="venues">
+		<li data-list>
+			<a href="?venue={{id}}">
+				<span data-bind:text="name">Venue name</span>
+				<ul class="tag-list">
+					<li data-list data-bind:text>Tag</li>
+				</ul>
+			</a>
+		</li>
+	</ul>
+	<dialog>
+		<select>
+			<option></option>
+			<option data-list="venue-for-claiming" data-bind:text="name" data-bind:value="slug"></option>
+			<option value="_new">Create new venue</option>
+		</select>
+	</dialog>
+</venue-listing>
+HTML;
+
 	const HTML_TEXTAREA = <<<HTML
 <form method="post">
 	<label>
