@@ -381,7 +381,10 @@ class BindableCache {
 		return $refAttr->getArguments()[0];
 	}
 
-	/** @param class-string $className */
+	/**
+	 * @param ReflectionAttribute<object> $reflectionAttribute
+	 * @param class-string $className
+	 */
 	private function isAttribute(
 		ReflectionAttribute $reflectionAttribute,
 		string $className,

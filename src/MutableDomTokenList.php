@@ -1,7 +1,7 @@
 <?php
 namespace GT\DomTemplate;
 
-use Gt\Dom\DOMTokenList;
+use GT\Dom\DOMTokenList;
 
 class MutableDomTokenList extends DOMTokenList {
 	public function __construct(

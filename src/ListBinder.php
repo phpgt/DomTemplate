@@ -2,8 +2,8 @@
 namespace GT\DomTemplate;
 
 use DateTimeInterface;
-use Gt\Dom\Document;
-use Gt\Dom\Element;
+use GT\Dom\Document;
+use GT\Dom\Element;
 use Iterator;
 use IteratorAggregate;
 use Stringable;

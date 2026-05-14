@@ -1,8 +1,8 @@
 <?php
 namespace GT\DomTemplate;
 
-use Gt\Dom\Element;
-use Gt\Dom\HTMLDocument;
+use GT\Dom\Element;
+use GT\Dom\HTMLDocument;
 
 class PartialExpander extends PartialContentExpander {
 	/**

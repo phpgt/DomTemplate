@@ -1,9 +1,9 @@
 <?php
 namespace GT\DomTemplate;
 
-use Gt\Dom\Document;
-use Gt\Dom\Element;
-use Gt\Dom\ElementType;
+use GT\Dom\Document;
+use GT\Dom\Element;
+use GT\Dom\ElementType;
 use Traversable;
 
 /**
@@ -159,7 +159,7 @@ class TableBinder {
 	 */
 	private function bindRowData(
 		Element $tableBody,
-		\Gt\Dom\DocumentFragment $rowFragment,
+		\GT\Dom\DocumentFragment $rowFragment,
 		Element $context,
 		array $headerRow,
 		array $allowedHeaders,

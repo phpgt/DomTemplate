@@ -1,8 +1,8 @@
 <?php
 namespace GT\DomTemplate;
 
-use Gt\Dom\Element;
-use Gt\Dom\Node;
+use GT\Dom\Element;
+use GT\Dom\Node;
 use Stringable;
 
 class NodePathCalculator implements Stringable {

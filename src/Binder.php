@@ -1,7 +1,7 @@
 <?php
 namespace GT\DomTemplate;
 
-use Gt\Dom\Element;
+use GT\Dom\Element;
 
 abstract class Binder {
 	abstract public function bindValue(

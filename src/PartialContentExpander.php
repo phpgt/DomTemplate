@@ -1,7 +1,7 @@
 <?php
 namespace GT\DomTemplate;
 
-use Gt\Dom\HTMLDocument;
+use GT\Dom\HTMLDocument;
 
 abstract class PartialContentExpander {
 	public function __construct(
