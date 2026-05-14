@@ -9,6 +9,7 @@ use GT\DomTemplate\Test\TestHelper\Model\Address;
 use GT\DomTemplate\Test\TestHelper\Model\Customer;
 use GT\DomTemplate\Test\TestHelper\Model\Order;
 use GT\DomTemplate\Test\TestHelper\TestData;
+use Gt\DomTemplate\BindGetter as LegacyNamespaceCaseBindGetter;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 
@@ -52,6 +53,19 @@ class BindableCacheTest extends TestCase {
 		$sut = new BindableCache();
 		$kvp = $sut->convertToKvp($obj);
 		self::assertEquals("Test Name", $kvp["name"]);
+	}
+
+	public function testConvertToKvp_getterWithLegacyNamespaceCase():void {
+		$obj = new class {
+			#[LegacyNamespaceCaseBindGetter]
+			public function getSlugUC():string {
+				return "TEST-SLUG";
+			}
+		};
+
+		$sut = new BindableCache();
+		$kvp = $sut->convertToKvp($obj);
+		self::assertSame("TEST-SLUG", $kvp["slugUC"]);
 	}
 
 	public function testConvertToKvp_getterDoesNotStartWithGet():void {
