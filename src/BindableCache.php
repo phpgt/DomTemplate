@@ -354,8 +354,8 @@ class BindableCache {
 	private function getBindAttributes(ReflectionMethod|ReflectionProperty $ref):array {
 		return array_filter(
 			$ref->getAttributes(),
-			fn(ReflectionAttribute $refAttr) => $refAttr->getName() === Bind::class
-				|| $refAttr->getName() === BindGetter::class
+			fn(ReflectionAttribute $refAttr) => $this->isAttribute($refAttr, Bind::class)
+				|| $this->isAttribute($refAttr, BindGetter::class)
 		);
 	}
 
@@ -364,7 +364,7 @@ class BindableCache {
 		ReflectionAttribute $refAttr,
 		?ReflectionMethod $refMethod = null,
 	):string {
-		if($refAttr->getName() === BindGetter::class && $refMethod) {
+		if($this->isAttribute($refAttr, BindGetter::class) && $refMethod) {
 			$methodName = $refMethod->getName();
 			if(!str_starts_with($methodName, "get")) {
 				throw new BindGetterMethodDoesNotStartWithGetException(
@@ -379,6 +379,14 @@ class BindableCache {
 		}
 
 		return $refAttr->getArguments()[0];
+	}
+
+	/** @param class-string $className */
+	private function isAttribute(
+		ReflectionAttribute $reflectionAttribute,
+		string $className,
+	):bool {
+		return strcasecmp($reflectionAttribute->getName(), $className) === 0;
 	}
 
 	/** @return null|string|array<int|string, mixed> */

@@ -1322,10 +1322,10 @@ HTML;
 <!doctype html>
 <h1>List of students:</h1>
 <ul>
-	<li data-list>
+	<li data-list data-bind:data-id="generatedId">
 		<dl>
 			<dt>Student name</dt>
-			<dd class="name">
+			<dd class="name" data-bind:data-full-name="name.fullName">
 				<span data-bind:text="name.first">First name</span> 
 				<span data-bind:text="name.last">Last name</span>
 			</dd>

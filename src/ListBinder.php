@@ -102,10 +102,7 @@ class ListBinder {
 		?callable $callback,
 	):int {
 		$this->elementBinder->bind(self::LIST_KEY_BIND_KEY, $listKey, $template);
-		if($this->isNested($listValue)) {
-			return $this->bindNestedListItem($template, $listKey, $listValue);
-		}
-
+		$normalizedFromObject = $this->canNormalizeObject($listValue);
 		$listValue = $this->normalizeListValue($listValue);
 		if($callback) {
 			$callbackValue = $callback($template, $listValue, $listKey);
@@ -116,6 +113,10 @@ class ListBinder {
 
 		if(is_null($listValue)) {
 			return 0;
+		}
+
+		if(!$normalizedFromObject && $this->isNested($listValue)) {
+			return $this->bindNestedListItem($template, $listKey, $listValue);
 		}
 
 		if($this->isKeyValuePair($listValue)) {
@@ -129,6 +130,15 @@ class ListBinder {
 
 		$this->elementBinder->bind(null, $listValue, $template);
 		return 0;
+	}
+
+	private function canNormalizeObject(mixed $listValue):bool {
+		if(!is_object($listValue)) {
+			return false;
+		}
+
+		return method_exists($listValue, "asArray")
+			|| $this->bindableCache->isBindable($listValue);
 	}
 
 	private function bindNestedListItem(
@@ -150,9 +160,7 @@ class ListBinder {
 			return $listValue->asArray();
 		}
 
-		if(is_object($listValue)
-		&& !is_iterable($listValue)
-		&& $this->bindableCache->isBindable($listValue)) {
+		if(is_object($listValue) && $this->bindableCache->isBindable($listValue)) {
 			return $this->bindableCache->convertToKvp($listValue);
 		}
 
