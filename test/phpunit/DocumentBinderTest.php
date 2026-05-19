@@ -33,6 +33,9 @@ use GT\DomTemplate\Test\TestHelper\Model\Address;
 use GT\DomTemplate\Test\TestHelper\Model\ArrayIterator\Product\ProductList;
 use GT\DomTemplate\Test\TestHelper\Model\Country;
 use GT\DomTemplate\Test\TestHelper\Model\Customer;
+use GT\DomTemplate\Test\TestHelper\Model\IteratorAggregate\Student\Module;
+use GT\DomTemplate\Test\TestHelper\Model\IteratorAggregate\Student\Name;
+use GT\DomTemplate\Test\TestHelper\Model\IteratorAggregate\Student\Student;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use IteratorAggregate;
@@ -2111,6 +2114,64 @@ PHP);
 
 		self::assertCount(2, $simpleListEl1->querySelectorAll("li"));
 		self::assertCount(4, $simpleListEl2->querySelectorAll("li"));
+	}
+
+	public function testBindList_bindGetter():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_STUDENT_LIST_EXPLICIT_BINDS);
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+
+		$module1 = new Module("Module 1");
+		$module2 = new Module("Module 2");
+		$module3 = new Module("Module 3");
+
+		$student1 = new Student(new Name("Abe", "Abarth"), [$module1, $module2]);
+		$student2 = new Student(new Name("Betty", "Barnard"), [$module2, $module3]);
+		$student3 = new Student(new Name("Charlie", "Cookie"), [$module1, $module2, $module3]);
+
+		$studentList = [$student1, $student2, $student3];
+		$sut->bindList($studentList);
+
+		/** @var Element $dl */
+		foreach($document->querySelectorAll("dl") as $i => $dl) {
+			$student = $studentList[$i];
+			self::assertSame($student->getGeneratedId(), $dl->parentElement->dataset->get("id"));
+			self::assertSame($student->name->getFullName(), $dl->querySelector(".name")->dataset->get("fullName"));
+		}
+	}
+
+	public function testBindListCallback_bindGetter():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_STUDENT_LIST_EXPLICIT_BINDS);
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+
+		$module1 = new Module("Module 1");
+		$module2 = new Module("Module 2");
+		$module3 = new Module("Module 3");
+
+		$student1 = new Student(new Name("Abe", "Abarth"), [$module1, $module2]);
+		$student2 = new Student(new Name("Betty", "Barnard"), [$module2, $module3]);
+		$student3 = new Student(new Name("Charlie", "Cookie"), [$module1, $module2, $module3]);
+
+		$studentList = [$student1, $student2, $student3];
+		$callbackCalls = [];
+		$sut->bindListCallback($studentList, function(Element $element, array $kvp, $index)use(&$callbackCalls):array {
+			array_push($callbackCalls, func_get_args());
+			self::assertArrayHasKey("name.first", $kvp);
+			self::assertArrayHasKey("name.last", $kvp);
+			self::assertArrayHasKey("name.fullName", $kvp);
+			self::assertArrayHasKey("generatedId", $kvp);
+			return $kvp;
+		});
+
+		self::assertCount(count($studentList), $callbackCalls);
+
+		/** @var Element $dl */
+		foreach($document->querySelectorAll("dl") as $i => $dl) {
+			$student = $studentList[$i];
+			self::assertSame($student->getGeneratedId(), $dl->parentElement->dataset->get("id"));
+			self::assertSame($student->name->getFullName(), $dl->querySelector(".name")->dataset->get("fullName"));
+		}
 	}
 
 	private function documentBinderDependencies(HTMLDocument $document, mixed...$otherObjectList):array {

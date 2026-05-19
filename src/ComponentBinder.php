@@ -1,8 +1,8 @@
 <?php
 namespace GT\DomTemplate;
 
-use Gt\Dom\Document;
-use Gt\Dom\Element;
+use GT\Dom\Document;
+use GT\Dom\Element;
 
 class ComponentBinder extends DocumentBinder {
 	private Element $componentElement;

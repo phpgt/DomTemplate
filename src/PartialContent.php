@@ -1,7 +1,7 @@
 <?php
 namespace GT\DomTemplate;
 
-use Gt\Dom\HTMLDocument;
+use GT\Dom\HTMLDocument;
 
 class PartialContent {
 	public function __construct(

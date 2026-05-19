@@ -49,6 +49,19 @@ class ListElementTest extends TestCase {
 		self::assertSame("example-template", $sut->getListItemName());
 	}
 
+	public function testIsNamed():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_EMPTY);
+		$unnamedElement = $document->createElement("li");
+		$unnamedElement->setAttribute("data-list", "");
+		$document->body->appendChild($unnamedElement);
+		$namedElement = $document->createElement("li");
+		$namedElement->setAttribute("data-list", "named-list");
+		$document->body->appendChild($namedElement);
+
+		self::assertFalse((new ListElement($unnamedElement))->isNamed());
+		self::assertTrue((new ListElement($namedElement))->isNamed());
+	}
+
 	public function testFinalizeListItem_noParentDoesNothing():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_EMPTY);
 		$template = $document->createElement("template");

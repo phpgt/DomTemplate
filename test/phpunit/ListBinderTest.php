@@ -150,6 +150,44 @@ class ListBinderTest extends TestCase {
 		}
 	}
 
+	public function testBindListData_unnamedListIgnoresDeeperNamedList():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_UNNAMED_LIST_WITH_DEEPER_NAMED_LIST);
+		$component = $document->querySelector("venue-listing");
+		$sut = new ListBinder();
+		$sut->setDependencies(...$this->listBinderDependencies($document));
+		$sut->bindListData([
+				[
+					"id" => "venue-1",
+					"name" => "Venue One",
+					"slug" => "venue-one",
+					"tag-list" => ["Tag one"],
+				],
+				[
+					"id" => "venue-2",
+					"name" => "Venue Two",
+					"slug" => "venue-two",
+					"tag-list" => ["Tag two", "Tag three"],
+				],
+			],
+			$component,
+		);
+
+		self::assertCount(
+			2,
+			$component->querySelectorAll("ul.venues > li"),
+			"The unnamed list should bind into the outer venue list.",
+		);
+		self::assertSame(
+			"Venue One",
+			$component->querySelector("ul.venues > li span")->textContent,
+		);
+		self::assertCount(
+			0,
+			$component->querySelectorAll("select option[value='venue-one']"),
+			"The unnamed bind should not use the deeper named list element.",
+		);
+	}
+
 	public function testBindList_filteredBindableObjectsWithoutZeroIndex():void {
 		$listData = [
 			new Student("A", "One", []),

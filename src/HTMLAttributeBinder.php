@@ -1,10 +1,10 @@
 <?php
 namespace GT\DomTemplate;
 
-use Gt\Dom\Attr;
-use Gt\Dom\Document;
-use Gt\Dom\DOMTokenList;
-use Gt\Dom\Element;
+use GT\Dom\Attr;
+use GT\Dom\Document;
+use GT\Dom\DOMTokenList;
+use GT\Dom\Element;
 
 class HTMLAttributeBinder {
 	private ListBinder $listBinder;

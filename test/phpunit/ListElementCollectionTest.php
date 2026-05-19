@@ -168,7 +168,7 @@ class ListElementCollectionTest extends TestCase {
 		$sut = new ListElementCollection($document);
 		$nonElementParent = self::createMock(ListElement::class);
 		$nonElementParent->method("getListItemParent")
-			->willReturn(self::createStub(\Gt\Dom\Node::class));
+			->willReturn(self::createStub(\GT\Dom\Node::class));
 		$listElement = self::createMock(ListElement::class);
 		$listElement->method("getListItemParent")
 			->willThrowException(new \TypeError("Detached"));
@@ -184,6 +184,37 @@ class ListElementCollectionTest extends TestCase {
 
 		self::assertSame(
 			$listElement,
+			$sut->get($document->querySelector("#target"))
+		);
+	}
+
+	public function testGet_noName_fallbackIgnoresNamedListElements():void {
+		$document = new HTMLDocument(
+			"<!doctype html><html><body><section id='target'><ul></ul><select></select></section></body></html>"
+		);
+		$sut = new ListElementCollection($document);
+		$namedListElement = self::createMock(ListElement::class);
+		$namedListElement->method("isNamed")
+			->willReturn(true);
+		$namedListElement->expects(self::never())
+			->method("getListItemParent");
+		$unnamedListElement = self::createMock(ListElement::class);
+		$unnamedListElement->method("isNamed")
+			->willReturn(false);
+		$unnamedListElement->method("getListItemParent")
+			->willThrowException(new \TypeError("Detached"));
+
+		$reflection = new \ReflectionProperty($sut, "elementKVP");
+		$reflection->setValue(
+			$sut,
+			[
+				"/html/body/section[@id='target']/select/option" => $namedListElement,
+				"/html/body/section[@id='target']/ul/li" => $unnamedListElement,
+			]
+		);
+
+		self::assertSame(
+			$unnamedListElement,
 			$sut->get($document->querySelector("#target"))
 		);
 	}

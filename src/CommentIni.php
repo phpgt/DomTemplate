@@ -1,10 +1,10 @@
 <?php
 namespace GT\DomTemplate;
 
-use Gt\Dom\Comment;
-use Gt\Dom\Document;
-use Gt\Dom\Element;
-use Gt\Dom\NodeFilter;
+use GT\Dom\Comment;
+use GT\Dom\Document;
+use GT\Dom\Element;
+use GT\Dom\NodeFilter;
 use Throwable;
 
 class CommentIni {

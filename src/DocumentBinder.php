@@ -1,9 +1,9 @@
 <?php
 namespace GT\DomTemplate;
 
-use Gt\Dom\Attr;
-use Gt\Dom\Document;
-use Gt\Dom\Element;
+use GT\Dom\Attr;
+use GT\Dom\Document;
+use GT\Dom\Element;
 
 class DocumentBinder extends Binder {
 	protected ElementBinder $elementBinder;

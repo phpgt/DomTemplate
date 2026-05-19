@@ -1,9 +1,9 @@
 <?php
 namespace GT\DomTemplate;
 
-use Gt\Dom\Element;
-use Gt\Dom\Node;
-use Gt\Dom\Text;
+use GT\Dom\Element;
+use GT\Dom\Node;
+use GT\Dom\Text;
 use Throwable;
 
 class ListElement {
@@ -141,6 +141,10 @@ class ListElement {
 
 	public function getListItemNextSibling():null|Node|Element {
 		return $this->listItemNextSibling ?? null;
+	}
+
+	public function isNamed():bool {
+		return !is_null($this->getListItemName());
 	}
 
 	public function getListItemName():?string {

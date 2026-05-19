@@ -1,11 +1,11 @@
 <?php
 namespace GT\DomTemplate;
 
-use Gt\Dom\Attr;
-use Gt\Dom\Document;
-use Gt\Dom\Element;
-use Gt\Dom\Node;
-use Gt\Dom\Text;
+use GT\Dom\Attr;
+use GT\Dom\Document;
+use GT\Dom\Element;
+use GT\Dom\Node;
+use GT\Dom\Text;
 
 class PlaceholderBinder {
 	public function bind(

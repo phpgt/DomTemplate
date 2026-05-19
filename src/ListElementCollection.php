@@ -1,8 +1,8 @@
 <?php
 namespace GT\DomTemplate;
 
-use Gt\Dom\Document;
-use Gt\Dom\Element;
+use GT\Dom\Document;
+use GT\Dom\Element;
 use Throwable;
 
 class ListElementCollection {
@@ -73,6 +73,10 @@ class ListElementCollection {
 		$matchedElement = null;
 		$matchedDepth = -1;
 		foreach($this->elementKVP as $name => $element) {
+			if($element->isNamed()) {
+				continue;
+			}
+
 			try {
 				$listItemParent = $element->getListItemParent();
 			}
@@ -99,6 +103,10 @@ class ListElementCollection {
 		}
 
 		foreach($this->elementKVP as $name => $element) {
+			if($element->isNamed()) {
+				continue;
+			}
+
 			if($contextPath === $name) {
 				continue;
 			}

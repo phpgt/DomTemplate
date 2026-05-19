@@ -1,8 +1,8 @@
 <?php
 namespace GT\DomTemplate;
 
-use Gt\Dom\Element;
-use Gt\Dom\XPathResult;
+use GT\Dom\Element;
+use GT\Dom\XPathResult;
 
 class HTMLAttributeCollection {
 	public function find(Element $context):XPathResult {
