@@ -599,6 +599,26 @@ HTML;
 </ul>
 HTML;
 
+	const HTML_STUDENT_LIST_NAMED_OUTER = <<<HTML
+<!doctype html>
+<h1>List of students:</h1>
+<ul>
+	<li data-list="student">
+		<dl>
+			<dt>Student name</dt>
+			<dd class="name">{{firstName}} {{lastName}}</dd>
+
+			<dt>Current modules</dt>
+			<dd class="modules">
+				<ul>
+					<li data-list data-bind:text>Module name</li>
+				</ul>
+			</dd>
+		</dl>
+	</li>
+</ul>
+HTML;
+
 	const HTML_STUDENT_LIST_NO_MODULE_LIST = <<<HTML
 <!doctype html>
 <h1>List of students:</h1>
@@ -1441,6 +1461,29 @@ HTML;
 		<select>
 			<option></option>
 			<option data-list="venue-for-claiming" data-bind:text="name" data-bind:value="slug"></option>
+			<option value="_new">Create new venue</option>
+		</select>
+	</dialog>
+</venue-listing>
+HTML;
+
+	const HTML_UNNAMED_LIST_WITH_DEEPER_UNNAMED_LIST = <<<HTML
+<!doctype html>
+<venue-listing>
+	<ul class="venues">
+		<li data-list>
+			<a href="?venue={{id}}">
+				<span data-bind:text="name">Venue name</span>
+				<ul class="tag-list">
+					<li data-list data-bind:text>Tag</li>
+				</ul>
+			</a>
+		</li>
+	</ul>
+	<dialog>
+		<select>
+			<option></option>
+			<option data-list data-bind:text="name" data-bind:value="slug"></option>
 			<option value="_new">Create new venue</option>
 		</select>
 	</dialog>

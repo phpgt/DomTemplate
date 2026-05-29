@@ -65,7 +65,6 @@ class ListBinder {
 					$template,
 					$listKey,
 					$listValue,
-					$listItemName,
 					$callback,
 				);
 			}
@@ -98,7 +97,6 @@ class ListBinder {
 		Element $template,
 		int|string $listKey,
 		mixed $listValue,
-		?string $listItemName,
 		?callable $callback,
 	):int {
 		$this->elementBinder->bind(self::LIST_KEY_BIND_KEY, $listKey, $template);
@@ -120,12 +118,7 @@ class ListBinder {
 		}
 
 		if($this->isKeyValuePair($listValue)) {
-			return $this->bindKeyValueListItem(
-				$template,
-				$listKey,
-				$listValue,
-				$listItemName,
-			);
+			return $this->bindKeyValueListItem($template, $listKey, $listValue);
 		}
 
 		$this->elementBinder->bind(null, $listValue, $template);
@@ -174,7 +167,6 @@ class ListBinder {
 		Element $template,
 		int|string $listKey,
 		iterable $listValue,
-		?string $listItemName,
 	):int {
 		$nestedCount = 0;
 		$this->elementBinder->bind(null, $listKey, $template);
@@ -189,7 +181,7 @@ class ListBinder {
 			$nestedCount += $this->bindListData(
 				$value,
 				$template,
-				$listItemName,
+				null,
 				recursiveCall: true,
 			);
 		}
