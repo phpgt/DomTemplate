@@ -71,7 +71,7 @@ class ListElementCollection {
 		);
 
 		$matchedElement = null;
-		$matchedDepth = -1;
+		$matchedDistance = PHP_INT_MAX;
 		foreach($this->elementKVP as $name => $element) {
 			if($element->isNamed()) {
 				continue;
@@ -91,10 +91,10 @@ class ListElementCollection {
 				continue;
 			}
 
-			$depth = substr_count((string)(new NodePathCalculator($listItemParent)), "/");
-			if($depth > $matchedDepth) {
+			$distance = $this->getDistanceFromContext($context, $listItemParent);
+			if($distance < $matchedDistance) {
 				$matchedElement = $element;
-				$matchedDepth = $depth;
+				$matchedDistance = $distance;
 			}
 		}
 
@@ -139,5 +139,19 @@ class ListElementCollection {
 			"There is no unnamed list element in the context element "
 			. "$elementDescription ($elementNodePath)."
 		);
+	}
+
+	private function getDistanceFromContext(
+		Element $context,
+		Element $listItemParent,
+	):int {
+		$distance = 0;
+		$ancestor = $listItemParent;
+
+		while($ancestor !== $context && $ancestor = $ancestor->parentElement) {
+			$distance++;
+		}
+
+		return $distance;
 	}
 }
