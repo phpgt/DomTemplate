@@ -35,6 +35,13 @@ class CommentIniTest extends TestCase {
 		self::assertStringContainsString("something: broken", $document->saveHTML());
 	}
 
+	public function testContainsIniData_onlyFindsFirstComment():void {
+		$document = new HTMLDocument(HTMLPageContent::HTML_COMMENT_WITH_INI_AND_ANOTHER_COMMENT);
+		$sut = new CommentIni($document);
+		self::assertTrue($sut->containsIniData());
+		self::assertEquals("base-page", $sut->get("extends"));
+	}
+
 	public function testGet_noMatchingData():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_EXTENDS_PARTIAL_VIEW);
 		$sut = new CommentIni($document);
