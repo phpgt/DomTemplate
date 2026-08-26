@@ -3,7 +3,7 @@ namespace GT\DomTemplate\Test;
 
 use Gt\Dom\HTMLDocument;
 use GT\DomTemplate\BindableCache;
-use GT\DomTemplate\DomTemplateException;
+use GT\DomTemplate\DuplicateListElementNameException;
 use GT\DomTemplate\ElementBinder;
 use GT\DomTemplate\HTMLAttributeBinder;
 use GT\DomTemplate\HTMLAttributeCollection;
@@ -85,7 +85,7 @@ class ListElementCollectionTest extends TestCase {
 		HTML);
 		$sut = new ListElementCollection($document);
 
-		self::expectException(DomTemplateException::class);
+		self::expectException(DuplicateListElementNameException::class);
 		self::expectExceptionMessage('item');
 		$sut->get($document->getElementById("items"), "item");
 	}

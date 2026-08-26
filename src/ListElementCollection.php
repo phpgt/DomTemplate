@@ -8,11 +8,14 @@ use Throwable;
 class ListElementCollection {
 	/** @var array<string, ListElement> */
 	private array $elementKVP;
+	/** @var array<string, array<int, ListElement>> */
+	private array $namedElementKVP;
 
 	public function __construct(
 		Document $document
 	) {
 		$this->elementKVP = [];
+		$this->namedElementKVP = [];
 		$this->extractTemplates($document);
 	}
 
@@ -25,13 +28,7 @@ class ListElementCollection {
 		}
 
 		if($templateName) {
-			if(!isset($this->elementKVP[$templateName])) {
-				throw new ListElementNotFoundInContextException(
-					"List element with name \"$templateName\" can not be "
-					. "found within the context $context->tagName element."
-				);
-			}
-			return $this->elementKVP[$templateName];
+			return $this->findNamedMatch($context, $templateName);
 		}
 
 		return $this->findMatch($context);
@@ -43,22 +40,67 @@ class ListElementCollection {
 		foreach($document->querySelectorAll("[data-list],[data-template]") as $element) {
 			$templateElement = new ListElement($element);
 			$nodePath = (string)(new NodePathCalculator($element));
-			$key = $templateElement->getListItemName() ?? $nodePath;
-			$dataTemplateArray[$key] = $templateElement;
+			$dataTemplateArray[] = [
+				"path" => $nodePath,
+				"template" => $templateElement,
+			];
 		}
 
-		uksort(
+		usort(
 			$dataTemplateArray,
-			fn(string $a, string $b):int => substr_count($a, "/") > substr_count($b, "/")
+			fn(array $a, array $b):int => substr_count($a["path"], "/") > substr_count($b["path"], "/")
 				? -1
 				: 1
 		);
 
-		foreach($dataTemplateArray as $template) {
+		foreach($dataTemplateArray as ["template" => $template]) {
 			$template->removeOriginalElement();
 		}
 
-		$this->elementKVP = array_reverse($dataTemplateArray, true);
+		foreach(array_reverse($dataTemplateArray) as $templateData) {
+			$template = $templateData["template"];
+			if($name = $template->getListItemName()) {
+				$this->namedElementKVP[$name][] = $template;
+			}
+			else {
+				$this->elementKVP[$templateData["path"]] = $template;
+			}
+		}
+	}
+
+	private function findNamedMatch(
+		Element $context,
+		string $templateName,
+	):ListElement {
+		$matchedElementArray = [];
+		foreach($this->namedElementKVP[$templateName] ?? [] as $element) {
+			try {
+				$listItemParent = $element->getListItemParent();
+			}
+			catch(Throwable) {
+				continue;
+			}
+
+			if($listItemParent === $context || $context->contains($listItemParent)) {
+				$matchedElementArray[] = $element;
+			}
+		}
+
+		if(count($matchedElementArray) > 1) {
+			throw new DuplicateListElementNameException(
+				"More than one list element with name \"$templateName\" "
+				. "was found within the context $context->tagName element."
+			);
+		}
+
+		if($matchedElementArray) {
+			return $matchedElementArray[0];
+		}
+
+		throw new ListElementNotFoundInContextException(
+			"List element with name \"$templateName\" can not be "
+			. "found within the context $context->tagName element."
+		);
 	}
 
 	private function findMatch(Element $context):ListElement {
