@@ -3,6 +3,7 @@ namespace GT\DomTemplate\Test;
 
 use Gt\Dom\HTMLDocument;
 use GT\DomTemplate\BindableCache;
+use GT\DomTemplate\DomTemplateException;
 use GT\DomTemplate\ElementBinder;
 use GT\DomTemplate\HTMLAttributeBinder;
 use GT\DomTemplate\HTMLAttributeCollection;
@@ -67,6 +68,60 @@ class ListElementCollectionTest extends TestCase {
 		self::assertSame(
 			$document->getElementById("prog-lang-list"),
 			$listElement->getListItemParent()
+		);
+	}
+
+	public function testGet_name_duplicateWithinContextThrows():void {
+		$document = new HTMLDocument(<<<HTML
+		<!doctype html>
+		<html>
+		<body>
+			<ul id="items">
+				<li data-list="item">First item</li>
+				<li data-list="item">Second item</li>
+			</ul>
+		</body>
+		</html>
+		HTML);
+		$sut = new ListElementCollection($document);
+
+		self::expectException(DomTemplateException::class);
+		self::expectExceptionMessage('item');
+		$sut->get($document->getElementById("items"), "item");
+	}
+
+	public function testGet_name_duplicateInDifferentContextsResolvesWithinContext():void {
+		$document = new HTMLDocument(<<<HTML
+		<!doctype html>
+		<html>
+		<body>
+			<ul id="first-list">
+				<li data-list="item">First item</li>
+			</ul>
+			<ul id="second-list">
+				<li data-list="item">Second item</li>
+			</ul>
+		</body>
+		</html>
+		HTML);
+		$sut = new ListElementCollection($document);
+
+		$firstListItem = $sut->get(
+			$document->getElementById("first-list"),
+			"item"
+		);
+		$secondListItem = $sut->get(
+			$document->getElementById("second-list"),
+			"item"
+		);
+
+		self::assertSame(
+			$document->getElementById("first-list"),
+			$firstListItem->getListItemParent()
+		);
+		self::assertSame(
+			$document->getElementById("second-list"),
+			$secondListItem->getListItemParent()
 		);
 	}
 
