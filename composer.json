@@ -22,8 +22,7 @@
 	},
 	"autoload-dev": {
 		"psr-4": {
-			"GT\\DomTemplate\\Test\\": "./test/phpunit",
-			"Gt\\DomTemplate\\Test\\": "./test/phpunit"
+			"GT\\DomTemplate\\Test\\": "./test/phpunit"
 		}
 	},
 	"config": {
