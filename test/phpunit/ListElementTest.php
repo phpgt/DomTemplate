@@ -29,6 +29,23 @@ class ListElementTest extends TestCase {
 		self::assertSame($originalElementNextElementSibling, $sut->getListItemNextSibling());
 	}
 
+	public function testRemoveOriginalElement_detachedParent():void {
+		$document = new HTMLDocument('<ul><li data-list="item">Example</li></ul>');
+		$parent = $document->querySelector("ul");
+		$originalElement = $parent->firstElementChild;
+		$sut = new ListElement($originalElement);
+		$parent->remove();
+
+		$sut->removeOriginalElement();
+		self::assertNull($originalElement->parentElement);
+		self::assertCount(0, $parent->children);
+
+		$document->body->appendChild($parent);
+		$inserted = $sut->insertListItem();
+		self::assertSame($parent, $inserted->parentElement);
+		self::assertSame("Example", $inserted->textContent);
+	}
+
 	public function testInsertListItem():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_LIST_ELEMENT_WITH_MULTIPLE_DIVS);
 		$originalElement = $document->querySelector("[data-list]");

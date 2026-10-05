@@ -71,6 +71,24 @@ class ListElementCollectionTest extends TestCase {
 		);
 	}
 
+	public function testGet_name_ignoresDetachedParent():void {
+		$document = new HTMLDocument(<<<HTML
+		<ul id="detached"><li data-list="item">Detached item</li></ul>
+		<ul id="attached"><li data-list="item">Attached item</li></ul>
+		HTML);
+		$sut = new ListElementCollection($document);
+		$detached = $document->getElementById("detached");
+		$detached->remove();
+
+		$listItem = $sut->get($document, "item");
+		self::assertSame($document->getElementById("attached"), $listItem->getListItemParent());
+		self::assertSame("Attached item", $listItem->insertListItem()->textContent);
+
+		$document->body->appendChild($detached);
+		self::expectException(DuplicateListElementNameException::class);
+		$sut->get($document, "item");
+	}
+
 	public function testGet_name_duplicateWithinContextThrows():void {
 		$document = new HTMLDocument(<<<HTML
 		<!doctype html>
