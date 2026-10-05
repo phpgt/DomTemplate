@@ -3,6 +3,7 @@ namespace GT\DomTemplate\Test;
 
 use GT\Dom\HTMLDocument;
 use GT\DomTemplate\BindableCache;
+use GT\DomTemplate\DuplicateListElementNameException;
 use GT\DomTemplate\ElementBinder;
 use GT\DomTemplate\HTMLAttributeBinder;
 use GT\DomTemplate\HTMLAttributeCollection;
@@ -67,6 +68,78 @@ class ListElementCollectionTest extends TestCase {
 		self::assertSame(
 			$document->getElementById("prog-lang-list"),
 			$listElement->getListItemParent()
+		);
+	}
+
+	public function testGet_name_ignoresDetachedParent():void {
+		$document = new HTMLDocument(<<<HTML
+		<ul id="detached"><li data-list="item">Detached item</li></ul>
+		<ul id="attached"><li data-list="item">Attached item</li></ul>
+		HTML);
+		$sut = new ListElementCollection($document);
+		$detached = $document->getElementById("detached");
+		$detached->remove();
+
+		$listItem = $sut->get($document, "item");
+		self::assertSame($document->getElementById("attached"), $listItem->getListItemParent());
+		self::assertSame("Attached item", $listItem->insertListItem()->textContent);
+
+		$document->body->appendChild($detached);
+		self::expectException(DuplicateListElementNameException::class);
+		$sut->get($document, "item");
+	}
+
+	public function testGet_name_duplicateWithinContextThrows():void {
+		$document = new HTMLDocument(<<<HTML
+		<!doctype html>
+		<html>
+		<body>
+			<ul id="items">
+				<li data-list="item">First item</li>
+				<li data-list="item">Second item</li>
+			</ul>
+		</body>
+		</html>
+		HTML);
+		$sut = new ListElementCollection($document);
+
+		self::expectException(DuplicateListElementNameException::class);
+		self::expectExceptionMessage('item');
+		$sut->get($document->getElementById("items"), "item");
+	}
+
+	public function testGet_name_duplicateInDifferentContextsResolvesWithinContext():void {
+		$document = new HTMLDocument(<<<HTML
+		<!doctype html>
+		<html>
+		<body>
+			<ul id="first-list">
+				<li data-list="item">First item</li>
+			</ul>
+			<ul id="second-list">
+				<li data-list="item">Second item</li>
+			</ul>
+		</body>
+		</html>
+		HTML);
+		$sut = new ListElementCollection($document);
+
+		$firstListItem = $sut->get(
+			$document->getElementById("first-list"),
+			"item"
+		);
+		$secondListItem = $sut->get(
+			$document->getElementById("second-list"),
+			"item"
+		);
+
+		self::assertSame(
+			$document->getElementById("first-list"),
+			$firstListItem->getListItemParent()
+		);
+		self::assertSame(
+			$document->getElementById("second-list"),
+			$secondListItem->getListItemParent()
 		);
 	}
 
