@@ -70,6 +70,7 @@ class CommentIni {
 
 			$this->assertCommentIsLeadingNode($commentNode);
 			$commentNodeToRemove = $commentNode;
+			break;
 		}
 
 		return [$commentNodeToRemove, $ini];

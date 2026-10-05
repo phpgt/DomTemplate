@@ -936,6 +936,16 @@ something: broken
 </article>
 HTML;
 
+	const HTML_COMMENT_WITH_INI_AND_ANOTHER_COMMENT = <<<HTML
+<!-- 
+extends=base-page
+-->
+<article>
+	<!-- This is just another comment -->
+	<h1>Hello from within a sub-template!</h1>
+</article>
+HTML;
+
 	const HTML_COMPONENT = <<<HTML
 <!doctype html>
 <h1>Component test</h1>
