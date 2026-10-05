@@ -10,6 +10,7 @@ use GT\Dom\HTMLDocument;
 use GT\DomTemplate\Bind;
 use GT\DomTemplate\BindableCache;
 use GT\DomTemplate\BindGetter;
+use GT\DomTemplate\DomTemplateException;
 use GT\DomTemplate\ElementBinder;
 use GT\DomTemplate\HTMLAttributeBinder;
 use GT\DomTemplate\HTMLAttributeCollection;
@@ -32,6 +33,19 @@ use PHPUnit\Framework\TestCase;
 use Stringable;
 
 class ListBinderTest extends TestCase {
+	public function testBindListData_duplicateNamedItems():void {
+		$document = new HTMLDocument('<ul>
+			<li data-list="item" data-bind:text></li>
+			<li data-list="item" data-bind:text></li>
+		</ul>');
+		$sut = new ListBinder();
+		$sut->setDependencies(...$this->listBinderDependencies($document));
+
+		self::expectException(DomTemplateException::class);
+		self::expectExceptionMessage('More than one list element with name "item"');
+		$sut->bindListData(["First", "Second"], $document, "item");
+	}
+
 	public function testBindList_emptyList():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_LIST);
 
