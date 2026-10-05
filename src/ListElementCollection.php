@@ -24,17 +24,48 @@ class ListElementCollection {
 			$context = $context->documentElement;
 		}
 
-		if($templateName) {
-			if(!isset($this->elementKVP[$templateName])) {
-				throw new ListElementNotFoundInContextException(
-					"List element with name \"$templateName\" can not be "
-					. "found within the context $context->tagName element."
-				);
-			}
-			return $this->elementKVP[$templateName];
+		if(!is_null($templateName) && $templateName !== "") {
+			return $this->findNamedMatch($context, $templateName);
 		}
 
 		return $this->findMatch($context);
+	}
+
+	private function findNamedMatch(Element $context, string $templateName):ListElement {
+		$match = null;
+		foreach($this->elementKVP as $element) {
+			if($element->getListItemName() !== $templateName) {
+				continue;
+			}
+
+			try {
+				$parent = $element->getListItemParent();
+			}
+			catch(Throwable) {
+				continue;
+			}
+
+			if($parent !== $context && !$context->contains($parent)) {
+				continue;
+			}
+
+			if($match) {
+				throw new DuplicateListElementNameException(
+					"More than one list element with name \"$templateName\" "
+					. "exists within the context $context->tagName element."
+				);
+			}
+			$match = $element;
+		}
+
+		if($match) {
+			return $match;
+		}
+
+		throw new ListElementNotFoundInContextException(
+			"List element with name \"$templateName\" can not be "
+			. "found within the context $context->tagName element."
+		);
 	}
 
 	private function extractTemplates(Document $document):void {
@@ -44,6 +75,9 @@ class ListElementCollection {
 			$templateElement = new ListElement($element);
 			$nodePath = (string)(new NodePathCalculator($element));
 			$key = $templateElement->getListItemName() ?? $nodePath;
+			if(isset($dataTemplateArray[$key])) {
+				$key = $nodePath . "[" . count($dataTemplateArray) . "]";
+			}
 			$dataTemplateArray[$key] = $templateElement;
 		}
 

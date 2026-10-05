@@ -10,7 +10,7 @@ use GT\Dom\HTMLDocument;
 use GT\DomTemplate\Bind;
 use GT\DomTemplate\BindableCache;
 use GT\DomTemplate\BindGetter;
-use GT\DomTemplate\DomTemplateException;
+use GT\DomTemplate\DuplicateListElementNameException;
 use GT\DomTemplate\ElementBinder;
 use GT\DomTemplate\HTMLAttributeBinder;
 use GT\DomTemplate\HTMLAttributeCollection;
@@ -29,21 +29,54 @@ use GT\DomTemplate\Test\TestHelper\Model\IteratorAggregate\Student\Student as It
 use GT\DomTemplate\Test\TestHelper\Model\IteratorAggregate\Student\StudentFactory;
 use GT\DomTemplate\Test\TestHelper\Model\Student;
 use GT\DomTemplate\Test\TestHelper\TestData;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Stringable;
 
 class ListBinderTest extends TestCase {
-	public function testBindListData_duplicateNamedItems():void {
+	#[DataProvider("duplicateNamedItemsProvider")]
+	public function testBindListData_duplicateNamedItems(string $attribute, array $data):void {
 		$document = new HTMLDocument('<ul>
 			<li data-list="item" data-bind:text></li>
+			<li ' . $attribute . '="item" data-bind:text></li>
+		</ul>');
+		$sut = new ListBinder();
+		$sut->setDependencies(...$this->listBinderDependencies($document));
+
+		self::expectException(DuplicateListElementNameException::class);
+		self::expectExceptionMessage('More than one list element with name "item"');
+		$sut->bindListData($data, $document, "item");
+	}
+
+	public static function duplicateNamedItemsProvider():array {
+		return [
+			"data-list" => ["data-list", ["First", "Second"]],
+			"data-template alias" => ["data-template", ["First", "Second"]],
+			"empty list" => ["data-list", []],
+		];
+	}
+
+	public function testBindListData_sameNameInSeparateScopes():void {
+		$document = new HTMLDocument('<ul id="first">
+			<li data-list="item" data-bind:text></li>
+		</ul><ul id="second">
 			<li data-list="item" data-bind:text></li>
 		</ul>');
 		$sut = new ListBinder();
 		$sut->setDependencies(...$this->listBinderDependencies($document));
 
-		self::expectException(DomTemplateException::class);
-		self::expectExceptionMessage('More than one list element with name "item"');
-		$sut->bindListData(["First", "Second"], $document, "item");
+		$sut->bindListData(["First"], $document->getElementById("first"), "item");
+		$sut->bindListData(["Second"], $document->getElementById("second"), "item");
+		$sut->bindListData(["Third"], $document->getElementById("first"), "item");
+
+		self::assertCount(2, $document->querySelectorAll("#first li"));
+		self::assertSame("First", $document->querySelectorAll("#first li")[0]->textContent);
+		self::assertSame("Third", $document->querySelectorAll("#first li")[1]->textContent);
+		self::assertCount(1, $document->querySelectorAll("#second li"));
+		self::assertSame("Second", $document->querySelector("#second li")->textContent);
+
+		self::expectException(DuplicateListElementNameException::class);
+		$sut->bindListData(["Ambiguous"], $document, "item");
 	}
 
 	public function testBindList_emptyList():void {
