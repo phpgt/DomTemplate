@@ -3,7 +3,7 @@ namespace GT\DomTemplate\Test;
 
 use ArrayIterator;
 use IteratorAggregate;
-use Gt\Dom\HTMLDocument;
+use GT\Dom\HTMLDocument;
 use GT\DomTemplate\BindableCache;
 use GT\DomTemplate\ElementBinder;
 use GT\DomTemplate\HTMLAttributeBinder;

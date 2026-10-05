@@ -1,6 +1,6 @@
 <?php
 /** @noinspection HtmlUnknownTarget */
-use Gt\Dom\HTMLDocument;
+use GT\Dom\HTMLDocument;
 use GT\DomTemplate\Bind;
 use GT\DomTemplate\BindGetter;
 use GT\DomTemplate\DocumentBinder;

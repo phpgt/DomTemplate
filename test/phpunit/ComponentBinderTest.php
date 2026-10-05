@@ -1,7 +1,7 @@
 <?php
 namespace GT\DomTemplate\Test;
-use Gt\Dom\Element;
-use Gt\Dom\HTMLDocument;
+use GT\Dom\Element;
+use GT\Dom\HTMLDocument;
 use GT\DomTemplate\BindableCache;
 use GT\DomTemplate\ComponentBinder;
 use GT\DomTemplate\ComponentDoesNotContainContextException;

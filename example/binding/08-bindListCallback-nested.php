@@ -1,6 +1,6 @@
 <?php
-use Gt\Dom\Element;
-use Gt\Dom\HTMLDocument;
+use GT\Dom\Element;
+use GT\Dom\HTMLDocument;
 use GT\DomTemplate\DocumentBinder;
 
 require __DIR__ . "/../../vendor/autoload.php";

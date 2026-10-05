@@ -1,7 +1,7 @@
 <?php
 namespace GT\DomTemplate\Test;
 
-use Gt\Dom\HTMLDocument;
+use GT\Dom\HTMLDocument;
 use GT\DomTemplate\PartialContent;
 use GT\DomTemplate\PartialContentDirectoryNotFoundException;
 use GT\DomTemplate\PartialContentFileNotFoundException;

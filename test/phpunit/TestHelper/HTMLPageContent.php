@@ -1,8 +1,8 @@
 <?php
 namespace GT\DomTemplate\Test\TestHelper;
 
-use Gt\Dom\HTMLDocument;
-use Gt\Dom\XMLDocument;
+use GT\Dom\HTMLDocument;
+use GT\Dom\XMLDocument;
 
 class HTMLPageContent {
 	const HTML_EMPTY = <<<HTML
