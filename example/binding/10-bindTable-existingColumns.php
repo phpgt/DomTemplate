@@ -1,5 +1,5 @@
 <?php
-use Gt\Dom\HTMLDocument;
+use GT\Dom\HTMLDocument;
 use GT\DomTemplate\DocumentBinder;
 
 require __DIR__ . "/../../vendor/autoload.php";

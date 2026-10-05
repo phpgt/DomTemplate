@@ -1,7 +1,7 @@
 <?php
 namespace GT\DomTemplate\Test;
 
-use Gt\Dom\HTMLDocument;
+use GT\Dom\HTMLDocument;
 use GT\DomTemplate\PlaceholderBinder;
 use GT\DomTemplate\Test\TestHelper\HTMLPageContent;
 use PHPUnit\Framework\TestCase;

@@ -2,7 +2,7 @@
 namespace GT\DomTemplate\Test;
 
 use DateTime;
-use Gt\Dom\HTMLDocument;
+use GT\Dom\HTMLDocument;
 use GT\DomTemplate\HTMLAttributeBinder;
 use GT\DomTemplate\Test\TestHelper\HTMLPageContent;
 use PHPUnit\Framework\TestCase;

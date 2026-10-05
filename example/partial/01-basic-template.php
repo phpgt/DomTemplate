@@ -1,5 +1,5 @@
 <?php
-use Gt\Dom\HTMLDocument;
+use GT\Dom\HTMLDocument;
 use GT\DomTemplate\DocumentBinder;
 use GT\DomTemplate\PartialContent;
 use GT\DomTemplate\PartialExpander;

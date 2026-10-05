@@ -1,7 +1,7 @@
 <?php
 namespace GT\DomTemplate\Test;
 
-use Gt\Dom\HTMLDocument;
+use GT\Dom\HTMLDocument;
 use GT\DomTemplate\CyclicRecursionException;
 use GT\DomTemplate\DocumentBinder;
 use GT\DomTemplate\PartialContent;

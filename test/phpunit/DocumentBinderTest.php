@@ -4,10 +4,10 @@ namespace GT\DomTemplate\Test;
 
 use DateInterval;
 use Exception;
-use Gt\Dom\Document;
-use Gt\Dom\Element;
-use Gt\Dom\HTMLCollection;
-use Gt\Dom\HTMLDocument;
+use GT\Dom\Document;
+use GT\Dom\Element;
+use GT\Dom\HTMLCollection;
+use GT\Dom\HTMLDocument;
 use GT\DomTemplate\Bind;
 use GT\DomTemplate\BindableCache;
 use GT\DomTemplate\BindGetter;

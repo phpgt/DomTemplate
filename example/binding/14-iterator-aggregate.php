@@ -1,5 +1,5 @@
 <?php
-use Gt\Dom\HTMLDocument;
+use GT\Dom\HTMLDocument;
 use GT\DomTemplate\Bind;
 use GT\DomTemplate\BindableCache;
 use GT\DomTemplate\Binder;

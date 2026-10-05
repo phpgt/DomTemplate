@@ -1,7 +1,7 @@
 <?php
 namespace GT\DomTemplate\Test;
 
-use Gt\Dom\HTMLDocument;
+use GT\Dom\HTMLDocument;
 use GT\DomTemplate\CommentIni;
 use GT\DomTemplate\CommentIniInvalidDocumentLocationException;
 use GT\DomTemplate\Test\TestHelper\HTMLPageContent;
