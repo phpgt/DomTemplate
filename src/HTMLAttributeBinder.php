@@ -120,9 +120,17 @@ class HTMLAttributeBinder {
 		?string $key,
 		mixed $value,
 	):void {
-		if($attribute->name === "data-element"
-		&& $attribute->value === $key
-		&& $value) {
+		if($attribute->name !== "data-element") {
+			return;
+		}
+
+		$bindKey = $attribute->value;
+		if(str_starts_with($bindKey, "!")) {
+			$bindKey = substr($bindKey, 1);
+			$value = !$value;
+		}
+
+		if($bindKey === $key && $value) {
 			$element->setAttribute("data-bound", "");
 		}
 	}
