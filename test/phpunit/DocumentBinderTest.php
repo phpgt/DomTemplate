@@ -36,6 +36,7 @@ use GT\DomTemplate\Test\TestHelper\Model\Customer;
 use GT\DomTemplate\Test\TestHelper\Model\IteratorAggregate\Student\Module;
 use GT\DomTemplate\Test\TestHelper\Model\IteratorAggregate\Student\Name;
 use GT\DomTemplate\Test\TestHelper\Model\IteratorAggregate\Student\Student;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use IteratorAggregate;
@@ -1524,6 +1525,78 @@ PHP);
 		$errorDiv = $document->querySelector("form>div");
 		self::assertNotNull($errorDiv);
 		self::assertSame("There has been an error!", $errorDiv->textContent);
+	}
+
+	#[DataProvider("inverseElementPresenceProvider")]
+	public function testBindElement_inverseBoolean(
+		string $expression,
+		mixed $value,
+		bool $bind,
+		bool $retained,
+	):void {
+		$document = new HTMLDocument('<div id="target" data-element="' . $expression . '">Static content</div>');
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+		if($bind) {
+			$sut->bindKeyValue("isAdmin", $value);
+		}
+		$sut->cleanupDocument();
+
+		$target = $document->getElementById("target");
+		if(!$retained) {
+			self::assertNull($target);
+			return;
+		}
+
+		self::assertNotNull($target);
+		self::assertSame("Static content", $target->textContent);
+		self::assertFalse($target->hasAttribute("data-element"));
+		self::assertFalse($target->hasAttribute("data-bound"));
+	}
+
+	public static function inverseElementPresenceProvider():array {
+		$cases = [];
+		foreach(["isAdmin", "!isAdmin"] as $expression) {
+			$inverse = str_starts_with($expression, "!");
+			foreach([true, false, 1, 0, "admin", "", "0"] as $index => $value) {
+				$cases["$expression value $index"] = [$expression, $value, true, $inverse ? !$value : (bool)$value];
+			}
+			$cases["$expression unbound"] = [$expression, false, false, false];
+			$cases["$expression null"] = [$expression, null, true, false];
+		}
+		$cases["unrelated inverse key"] = ["!otherKey", false, true, false];
+		return $cases;
+	}
+
+	#[DataProvider("inverseAttributeElementProvider")]
+	public function testBindElement_inverseAttributeSurvivesCleanup(
+		string $modifier,
+		bool $value,
+	):void {
+		$isToken = str_contains($modifier, ":");
+		$property = $isToken ? "class" : "disabled";
+		$expression = $modifier . "isEnabled" . ($isToken ? " hidden" : "");
+		$document = new HTMLDocument('<button id="target" data-element data-bind:' . $property . '="' . $expression . '">Action</button>');
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+		$sut->bindKeyValue("isEnabled", $value);
+		$sut->cleanupDocument();
+
+		$target = $document->getElementById("target");
+		self::assertNotNull($target);
+		self::assertSame(!$value, $isToken ? $target->classList->contains("hidden") : $target->hasAttribute("disabled"));
+		self::assertFalse($target->hasAttribute("data-element"));
+		self::assertFalse($target->hasAttribute("data-bound"));
+	}
+
+	public static function inverseAttributeElementProvider():array {
+		$cases = [];
+		foreach(["?!", "!?", ":!", "!:"] as $modifier) {
+			foreach([true, false] as $value) {
+				$cases[$modifier . ($value ? " true" : " false")] = [$modifier, $value];
+			}
+		}
+		return $cases;
 	}
 
 	public function test_bindElementRemovesMultiple():void {
