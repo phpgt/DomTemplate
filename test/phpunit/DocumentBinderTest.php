@@ -514,6 +514,43 @@ PHP);
 		self::assertSame("secondary", $img->className);
 	}
 
+	public function testBindKeyValue_multipleClassToggles():void {
+		$document = new HTMLDocument('<span class="existing" data-bind:class=":overweight :oversize">0,000</span>');
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+		$span = $document->querySelector("span");
+
+		$sut->bindKeyValue("overweight", true);
+		self::assertTrue($span->classList->contains("overweight"));
+		self::assertFalse($span->classList->contains("oversize"));
+		self::assertSame(":oversize", $span->getAttribute("data-bind:class"));
+
+		$sut->bindKeyValue("oversize", true);
+		self::assertTrue($span->classList->contains("overweight"));
+		self::assertTrue($span->classList->contains("oversize"));
+		self::assertTrue($span->classList->contains("existing"));
+		self::assertFalse($span->hasAttribute("data-bind:class"));
+	}
+
+	public function testBindKeyValue_multipleClassToggles_rebind():void {
+		$document = new HTMLDocument('<span data-bind:class=":overweight :oversize" data-rebind></span>');
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+		$span = $document->querySelector("span");
+
+		$sut->bindKeyValue("oversize", true);
+		$sut->bindKeyValue("overweight", true);
+		self::assertTrue($span->classList->contains("overweight"));
+		self::assertTrue($span->classList->contains("oversize"));
+
+		$sut->bindKeyValue("overweight", false);
+		self::assertFalse($span->classList->contains("overweight"));
+		self::assertTrue($span->classList->contains("oversize"));
+		$sut->bindKeyValue("oversize", false);
+		self::assertSame("", $span->className);
+		self::assertSame(":overweight :oversize", $span->getAttribute("data-bind:class"));
+	}
+
 	public function testBindKeyValue_classToggle_differentClassNameToBindKey():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_DIFFERENT_BIND_PROPERTIES);
 		$sut = new DocumentBinder($document);
