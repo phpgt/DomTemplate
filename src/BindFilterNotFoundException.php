@@ -6,7 +6,7 @@ class BindFilterNotFoundException extends BindFilterException {
 		$methodName = "filter" . ucfirst($filterName);
 		parent::__construct($filterName, $expression,
 			"Bind filter \"$filterName\" could not be found for expression \"$expression\". "
-			. "Define a public instance method named $methodName on the registered BindFilter.",
+			. "Define a public instance method named $methodName on a registered BindFilter class.",
 		);
 	}
 }

@@ -45,6 +45,55 @@ class BindFilterBindingTest extends TestCase {
 		self::assertSame("12345", $document->querySelector("#raw")->textContent);
 	}
 
+	public function testMultipleProvidersChainWithLaterOverridesAndEarlierFallbacks():void {
+		$document = new HTMLDocument('<p data-bind:text="amount|number|currency"></p>'
+			. '<b data-bind:text="amount|number"></b>');
+		$binder = $this->createBinder($document);
+		$binder->registerBindFilter(new class extends BindFilter {
+			public function filterNumber(int $value):string {
+				return number_format($value, 2);
+			}
+			public function filterCurrency(string $value):string {
+				return "£" . $value;
+			}
+		});
+		$application = new class extends BindFilter {
+			public function filterCurrency(string $value):string {
+				return ($this->getDependency(stdClass::class)?->symbol ?? "€") . $value;
+			}
+		};
+		$application->setDependency((object)["symbol" => "$"]);
+		$binder->registerBindFilter($application);
+		$binder->bindKeyValue("amount", 12345);
+
+		self::assertSame("$12,345.00", $document->querySelector("p")->textContent);
+		self::assertSame("12,345.00", $document->querySelector("b")->textContent);
+	}
+
+	public function testRegisteringTheSameClassReplacesItAndUpdatesPrecedence():void {
+		$document = new HTMLDocument('<p data-bind:text="name|label" data-rebind></p>');
+		$binder = $this->createBinder($document);
+		$first = new class extends BindFilter {
+			public string $prefix = "first ";
+			public function filterLabel(string $value):string {
+				return $this->prefix . $value;
+			}
+		};
+		$binder->registerBindFilter($first);
+		$binder->registerBindFilter(new class extends BindFilter {
+			public function filterLabel(string $value):string {
+				return "second " . $value;
+			}
+		});
+		$binder->bindKeyValue("name", "hello");
+		self::assertSame("second hello", $document->querySelector("p")->textContent);
+		$replacement = clone $first;
+		$replacement->prefix = "replacement ";
+		$binder->registerBindFilter($replacement);
+		$binder->bindKeyValue("name", "hello");
+		self::assertSame("replacement hello", $document->querySelector("p")->textContent);
+	}
+
 	public function testRawObjectsAreFilteredBeforeStringConversion():void {
 		$document = new HTMLDocument('<p data-bind:text="date|date"></p>');
 		$binder = $this->createBinder($document);

@@ -1,11 +1,15 @@
 <?php
 namespace GT\DomTemplate;
 
+use Closure;
+
 class BindFilterPipeline {
-	private ?BindFilter $filter = null;
+	/** @var array<class-string<BindFilter>, BindFilter> */
+	private array $filters = [];
 
 	public function register(BindFilter $filter):void {
-		$this->filter = $filter;
+		unset($this->filters[$filter::class]);
+		$this->filters[$filter::class] = $filter;
 	}
 
 	/** @return array{0:string, 1:mixed} */
@@ -25,10 +29,10 @@ class BindFilterPipeline {
 			if(!preg_match('/^[a-z][a-z0-9_]*$/iD', $filterName)) {
 				throw new InvalidBindFilterExpressionException($filterName, $expression);
 			}
-			if(!$this->filter) {
+			if(!$this->filters) {
 				throw new BindFilterNotRegisteredException($filterName, $expression);
 			}
-			$callback = $this->filter->getFilter($filterName);
+			$callback = $this->getFilter($filterName);
 			if(!$callback) {
 				throw new BindFilterNotFoundException($filterName, $expression);
 			}
@@ -48,5 +52,15 @@ class BindFilterPipeline {
 		}
 
 		return [$unfilteredExpression, $value];
+	}
+
+	private function getFilter(string $name):?Closure {
+		foreach(array_reverse($this->filters) as $filter) {
+			if($callback = $filter->getFilter($name)) {
+				return $callback;
+			}
+		}
+
+		return null;
 	}
 }
