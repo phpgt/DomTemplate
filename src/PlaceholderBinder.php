@@ -49,9 +49,10 @@ class PlaceholderBinder {
 					continue;
 				}
 
+				$bindValue = $value instanceof BindableValue ? $value->getBindingValue() : $value;
 				$valueToUse = $matches["DEFAULT"][$i];
-				if(!is_null($value) && $value !== "") {
-					$valueToUse = $value;
+				if(!is_null($bindValue) && $bindValue !== "") {
+					$valueToUse = $bindValue;
 				}
 
 				$nodeValue = str_replace(

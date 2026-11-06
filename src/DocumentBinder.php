@@ -35,6 +35,10 @@ class DocumentBinder extends Binder {
 		$this->bindableCache = $bindableCache;
 	}
 
+	public function registerBindFilter(BindFilter $filter):void {
+		$this->elementBinder->registerBindFilter($filter);
+	}
+
 	/**
 	 * Applies the string value of $value anywhere within $context that
 	 * has a data-bind attribute with no specified key.
@@ -101,7 +105,7 @@ class DocumentBinder extends Binder {
 			if(is_object($kvp)) {
 				if($this->bindableCache->isBindable($kvp)) {
 					$object = $kvp;
-					$kvp = $this->bindableCache->convertToKvp($kvp);
+					$kvp = $this->bindableCache->convertToKvp($kvp, preserveTypes: true);
 				}
 			}
 

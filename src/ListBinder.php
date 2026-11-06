@@ -103,7 +103,11 @@ class ListBinder {
 		$normalizedFromObject = $this->canNormalizeObject($listValue);
 		$listValue = $this->normalizeListValue($listValue);
 		if($callback) {
-			$callbackValue = $callback($template, $listValue, $listKey);
+			$callbackInput = is_array($listValue)
+				? array_map(fn(mixed $value):mixed => $value instanceof BindableValue
+					? $value->getBindingValue() : $value, $listValue)
+				: $listValue;
+			$callbackValue = $callback($template, $callbackInput, $listKey);
 			if(!is_null($callbackValue)) {
 				$listValue = $callbackValue;
 			}
@@ -141,7 +145,7 @@ class ListBinder {
 	):int {
 		$this->elementBinder->bind(null, $listKey, $template);
 		$this->bindListData($listValue, $template);
-		foreach($this->bindableCache->convertToKvp($listValue) as $key => $value) {
+		foreach($this->bindableCache->convertToKvp($listValue, preserveTypes: true) as $key => $value) {
 			$this->elementBinder->bind($key, $value, $template);
 		}
 
@@ -154,7 +158,7 @@ class ListBinder {
 		}
 
 		if(is_object($listValue) && $this->bindableCache->isBindable($listValue)) {
-			return $this->bindableCache->convertToKvp($listValue);
+			return $this->bindableCache->convertToKvp($listValue, preserveTypes: true);
 		}
 
 		return $listValue;

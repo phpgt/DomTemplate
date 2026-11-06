@@ -119,8 +119,8 @@ class BindableCache {
 		$methodName = $reflectionMethod->getName();
 		foreach($this->getBindAttributes($reflectionMethod) as $reflectionAttribute) {
 			$bindKey = $this->getBindKey($reflectionAttribute, $reflectionMethod);
-			$attributeCache[$bindKey] = fn(object $object):null|iterable|string
-				=> $this->nullableStringOrIterable($object, $methodName);
+			$attributeCache[$bindKey] = fn(object $object, bool $preserveTypes = false):mixed
+				=> $this->nullableStringOrIterable($object, $methodName, $preserveTypes);
 			$this->cacheNestedClassName(
 				$objectKeys,
 				$bindKey,
@@ -144,8 +144,8 @@ class BindableCache {
 		if(!empty($attributeList)) {
 			foreach($attributeList as $reflectionAttribute) {
 				$bindKey = $this->getBindKey($reflectionAttribute);
-				$attributeCache[$bindKey] = fn(object $object):null|iterable|string
-					=> $this->nullableStringOrIterable($object, $propertyName);
+				$attributeCache[$bindKey] = fn(object $object, bool $preserveTypes = false):mixed
+					=> $this->nullableStringOrIterable($object, $propertyName, $preserveTypes);
 				$this->cacheNestedClassName(
 					$objectKeys,
 					$bindKey,
@@ -160,9 +160,9 @@ class BindableCache {
 			return;
 		}
 
-		$attributeCache[$propertyName] = fn(object $object):null|iterable|string
+		$attributeCache[$propertyName] = fn(object $object, bool $preserveTypes = false):mixed
 			=> isset($object->$propertyName)
-				? $this->nullableStringOrIterable($object, $propertyName)
+				? $this->nullableStringOrIterable($object, $propertyName, $preserveTypes)
 				: null;
 		$this->cacheNestedClassName(
 			$objectKeys,
@@ -249,37 +249,45 @@ class BindableCache {
 	}
 
 	/**
-	 * @param object|array<string, string> $object
-	 * @return array<string, string>
+	 * @param object|array<string, mixed> $object
+	 * @return array<string, mixed>
+	 * @param bool $preserveTypes Retain original values alongside ordinary object binding values.
 	 */
-	public function convertToKvp(object|array $object):array {
+	public function convertToKvp(object|array $object, bool $preserveTypes = false):array {
 		if(is_array($object)) {
 			return $object;
 		}
 
 		if($object instanceof stdClass) {
-			return $this->stringifyMap(get_object_vars($object));
+			$values = get_object_vars($object);
+			return $preserveTypes
+				? array_map(fn(mixed $value):mixed => $this->preserveValue($value), $values)
+				: $this->stringifyMap($values);
 		}
 
 		if(!$this->isBindable($object)) {
 			return [];
 		}
 
-		return $this->convertBindableObjectToKvp($object);
+		return $this->convertBindableObjectToKvp($object, $preserveTypes);
 	}
 
-	/** @return array<string, null|string|array<int|string, mixed>> */
-	private function convertBindableObjectToKvp(object $object):array {
+	/** @return array<string, mixed> */
+	private function convertBindableObjectToKvp(object $object, bool $preserveTypes):array {
 		$kvp = [];
 		foreach($this->bindableClassMap[$object::class] as $key => $valueGetter) {
 			$targetObject = $this->resolveTargetObject($object, $key);
 			$value = $targetObject
-				? $valueGetter($targetObject)
+				? $valueGetter($targetObject, $preserveTypes)
 				: null;
-			$kvp[$key] = $this->normalizeValue($value);
+			$kvp[$key] = $preserveTypes ? $this->preserveValue($value) : $this->normalizeValue($value);
 		}
 
 		return $kvp;
+	}
+
+	private function preserveValue(mixed $value):mixed {
+		return is_iterable($value) ? $value : new BindableValue($value);
 	}
 
 	private function resolveTargetObject(object $object, string $key):?object {
@@ -392,11 +400,11 @@ class BindableCache {
 		return strcasecmp($reflectionAttribute->getName(), $className) === 0;
 	}
 
-	/** @return null|string|array<int|string, mixed> */
 	private function nullableStringOrIterable(
 		object $object,
 		string $keyOrMethod,
-	):null|iterable|string {
+		bool $preserveTypes = false,
+	):mixed {
 		if(method_exists($object, $keyOrMethod)) {
 			$value = $object->$keyOrMethod();
 		}
@@ -407,7 +415,7 @@ class BindableCache {
 			return null;
 		}
 
-		if(is_scalar($value)) {
+		if($preserveTypes || is_scalar($value)) {
 			return $value;
 		}
 		elseif(is_iterable($value)) {
