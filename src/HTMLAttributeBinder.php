@@ -46,8 +46,8 @@ class HTMLAttributeBinder {
 			$bindProperty = $this->getBindProperty($element, $attributeName);
 			$attributeValue = $attribute->value;
 			if(strtolower($bindProperty) === "class") {
-				// A new colon modifier starts another class binding expression.
-				$attributeValue = preg_replace('/\s+(?=!:|:)/', '; ', $attributeValue) ?? $attributeValue;
+				// A new modifier starts another class binding expression.
+				$attributeValue = preg_replace('/\s+(?=!?[:?])/', '; ', $attributeValue) ?? $attributeValue;
 			}
 			[$modifier, $remainingExpressions] = $this->resolveModifier($key, $attributeValue);
 			if($modifier === false) {

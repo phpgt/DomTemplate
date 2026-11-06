@@ -551,6 +551,26 @@ PHP);
 		self::assertSame(":overweight :oversize", $span->getAttribute("data-bind:class"));
 	}
 
+	public function testBindKeyValue_multipleClassBindings_mixedModifiers():void {
+		$document = new HTMLDocument('<span data-bind:class="?isAdmin :featured !?loggedIn"></span>');
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+		$span = $document->querySelector("span");
+
+		$sut->bindKeyValue("isAdmin", "admin");
+		self::assertSame("admin", $span->className);
+		self::assertSame(":featured; !?loggedIn", $span->getAttribute("data-bind:class"));
+
+		$sut->bindKeyValue("featured", true);
+		self::assertTrue($span->classList->contains("admin"));
+		self::assertTrue($span->classList->contains("featured"));
+		self::assertSame("!?loggedIn", $span->getAttribute("data-bind:class"));
+
+		$sut->bindKeyValue("loggedIn", true);
+		self::assertFalse($span->hasAttribute("class"));
+		self::assertFalse($span->hasAttribute("data-bind:class"));
+	}
+
 	public function testBindKeyValue_classToggle_differentClassNameToBindKey():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_DIFFERENT_BIND_PROPERTIES);
 		$sut = new DocumentBinder($document);
