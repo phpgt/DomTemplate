@@ -10,6 +10,12 @@ class HTMLAttributeBinder {
 	private ListBinder $listBinder;
 	private TableBinder $tableBinder;
 	private ?string $debugSource = null;
+	private ?BindFilterPipeline $filterPipeline = null;
+
+	public function registerBindFilter(BindFilter $filter):void {
+		$this->filterPipeline ??= new BindFilterPipeline();
+		$this->filterPipeline->register($filter);
+	}
 
 	public function setDependencies(ListBinder $listBinder, TableBinder $tableBinder):void {
 		$this->listBinder = $listBinder;
@@ -25,29 +31,41 @@ class HTMLAttributeBinder {
 		mixed $value,
 		Document|Element $element
 	):void {
-		if(is_null($value)) {
-			return;
-		}
-
 		if($element instanceof Document) {
 			$element = $element->documentElement;
 		}
 
-		$bindValue = $this->standardiseBindValue($value);
 		$attributesToRemove = [];
 		$attributeUpdates = [];
 		foreach($element->attributes as $attributeName => $attribute) {
 			/** @var Attr $attribute */
-			$this->markBoundElement($element, $attribute, $key, $bindValue);
+			$this->markBoundElement($element, $attribute, $key, $value);
 			if(!$this->shouldHandleAttribute($attributeName)) {
 				continue;
 			}
 
+			if((is_null($value) || ($value instanceof BindableValue && is_null($value->rawValue)))
+			&& !str_contains($attribute->value, "|")) {
+				continue;
+			}
+
 			$bindProperty = $this->getBindProperty($element, $attributeName);
-			[$modifier, $remainingExpressions] = $this->resolveModifier($key, $attribute->value);
+			[$modifier, $remainingExpressions, $expression] = $this->resolveModifier(
+				$key, $attribute->value,
+			);
 			if($modifier === false) {
 				continue;
 			}
+
+			$this->filterPipeline ??= new BindFilterPipeline();
+			[$unfilteredExpression, $filteredValue] = $this->filterPipeline->apply($expression, $value);
+			if(is_null($filteredValue)) {
+				continue;
+			}
+			if(is_string($modifier)) {
+				$modifier = $unfilteredExpression;
+			}
+			$bindValue = $this->standardiseBindValue($filteredValue);
 
 			$this->setBindProperty(
 				$element,
@@ -124,6 +142,13 @@ class HTMLAttributeBinder {
 			return;
 		}
 
+		if($value instanceof BindableValue) {
+			$value = $value->getBindingValue();
+		}
+		if(is_null($value)) {
+			return;
+		}
+
 		$bindKey = $attribute->value;
 		if(str_starts_with($bindKey, "!")) {
 			$bindKey = substr($bindKey, 1);
@@ -174,17 +199,18 @@ class HTMLAttributeBinder {
 		return substr($attributeName, strpos($attributeName, ":") + 1);
 	}
 
-	/** @return array{0:string|false|null, 1:array<int, string>} */
+	/** @return array{0:string|false|null, 1:array<int, string>, 2:string} */
 	private function resolveModifier(
 		?string $key,
 		string $attributeValue,
 	):array {
-		if(is_null($key)) {
+		if(is_null($key) && !str_starts_with($attributeValue, "|")) {
 			return [
 				$attributeValue === ""
 					? null
 					: false,
 				[],
+				$attributeValue,
 			];
 		}
 
@@ -194,7 +220,8 @@ class HTMLAttributeBinder {
 			$trimmedExpression = ltrim($expression, ":!?");
 			$trimmedExpression = strtok($trimmedExpression, " ");
 			$bindKey = $this->extractBindKey($trimmedExpression);
-			if(is_null($matchingExpression) && ($key === $bindKey || $bindKey === "@")) {
+			if(is_null($matchingExpression)
+			&& (($key ?? "") === $bindKey || ($key !== null && $bindKey === "@"))) {
 				$matchingExpression = $expression;
 				continue;
 			}
@@ -203,7 +230,7 @@ class HTMLAttributeBinder {
 		}
 
 		if(is_null($matchingExpression)) {
-			return [false, []];
+			return [false, [], ""];
 		}
 
 		return [
@@ -211,6 +238,7 @@ class HTMLAttributeBinder {
 				? $matchingExpression
 				: null,
 			$remainingExpressions,
+			$matchingExpression,
 		];
 	}
 
@@ -470,6 +498,7 @@ class HTMLAttributeBinder {
 
 	private function extractBindKey(string $bindExpression):string {
 		[$bindKey] = explode("=", $bindExpression, 2);
+		[$bindKey] = explode("|", $bindKey, 2);
 		return $bindKey;
 	}
 

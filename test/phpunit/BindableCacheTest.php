@@ -42,6 +42,41 @@ class BindableCacheTest extends TestCase {
 		self::assertTrue($sut->isBindable($obj2));
 	}
 
+	public function testConvertToKvp_associativeArrayRetainsOriginalValues():void {
+		$date = new \DateTimeImmutable("2026-11-07");
+		$data = ["amount" => 12345.5, "date" => $date, "available" => false, "description" => null];
+		$sut = new BindableCache();
+
+		$result = $sut->convertToKvp($data);
+
+		self::assertSame($data, $result);
+		self::assertSame($date, $result["date"]);
+	}
+
+	public function testConvertToKvp_stdClassKeepsItsExistingPresentationContract():void {
+		$label = new class implements \Stringable {
+			public function __toString():string {
+				return "Invoice";
+			}
+		};
+		$data = (object)[
+			"amount" => 12345.5,
+			"available" => false,
+			"description" => null,
+			"items" => [["name" => "First"]],
+			"label" => $label,
+		];
+		$sut = new BindableCache();
+
+		self::assertSame([
+			"amount" => "12345.5",
+			"available" => "",
+			"description" => null,
+			"items" => [["name" => "First"]],
+			"label" => "Invoice",
+		], $sut->convertToKvp($data));
+	}
+
 	public function testConvertToKvp_getter():void {
 		$obj = new class {
 			#[BindGetter]
@@ -266,12 +301,12 @@ class BindableCacheTest extends TestCase {
 		);
 	}
 
-	public function testNullableStringOrIterable_missingMemberReturnsNull():void {
+	public function testReadBindableValue_missingMemberReturnsNull():void {
 		$sut = new BindableCache();
 		$object = new class {};
 
 		self::assertNull(
-			$this->invokeBindableCacheMethod($sut, "nullableStringOrIterable", $object, "missing"),
+			$this->invokeBindableCacheMethod($sut, "readBindableValue", $object, "missing"),
 		);
 	}
 

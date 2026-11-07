@@ -8,6 +8,10 @@ class ElementBinder {
 	private HTMLAttributeCollection $htmlAttributeCollection;
 	private PlaceholderBinder $placeholderBinder;
 
+	public function registerBindFilter(BindFilter $filter):void {
+		$this->htmlAttributeBinder->registerBindFilter($filter);
+	}
+
 	public function setDebugSource(?string $debugSource):void {
 		$this->htmlAttributeBinder->setDebugSource($debugSource);
 	}
@@ -31,14 +35,15 @@ class ElementBinder {
 		mixed $value,
 		Element $context
 	):void {
-		if(!is_null($value) && !is_scalar($value) && !is_iterable($value)) {
-			$value = new BindValue($value);
-		}
-
 		/** @var Element $element */
 		foreach($this->htmlAttributeCollection->find($context) as $element) {
 			$this->htmlAttributeBinder->expandAttributes($element);
 			$this->htmlAttributeBinder->bind($key, $value, $element);
+		}
+
+		if(!is_null($value) && !is_scalar($value) && !is_iterable($value)
+		&& !$value instanceof BindableValue) {
+			$value = new BindValue($value);
 		}
 
 		$this->placeholderBinder->bind($key, $value, $context);

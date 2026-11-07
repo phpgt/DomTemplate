@@ -4,6 +4,8 @@ namespace GT\DomTemplate;
 use GT\Dom\Element;
 
 abstract class Binder {
+	abstract public function registerBindFilter(BindFilter $filter):void;
+
 	abstract public function bindValue(
 		mixed $value,
 		null|string|Element $context = null
