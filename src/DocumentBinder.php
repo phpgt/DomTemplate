@@ -105,7 +105,7 @@ class DocumentBinder extends Binder {
 			if(is_object($kvp)) {
 				if($this->bindableCache->isBindable($kvp)) {
 					$object = $kvp;
-					$kvp = $this->bindableCache->convertToKvp($kvp, preserveTypes: true);
+					$kvp = $this->bindableCache->convertToBindableValues($kvp);
 				}
 			}
 

@@ -10,7 +10,6 @@ use ReflectionObject;
 use ReflectionProperty as RefProperty;
 use ReflectionProperty;
 use stdClass;
-use Stringable;
 
 class BindableCache {
 	/**
@@ -119,8 +118,8 @@ class BindableCache {
 		$methodName = $reflectionMethod->getName();
 		foreach($this->getBindAttributes($reflectionMethod) as $reflectionAttribute) {
 			$bindKey = $this->getBindKey($reflectionAttribute, $reflectionMethod);
-			$attributeCache[$bindKey] = fn(object $object, bool $preserveTypes = false):mixed
-				=> $this->nullableStringOrIterable($object, $methodName, $preserveTypes);
+			$attributeCache[$bindKey] = fn(object $object):mixed
+				=> $this->readBindableValue($object, $methodName);
 			$this->cacheNestedClassName(
 				$objectKeys,
 				$bindKey,
@@ -144,8 +143,8 @@ class BindableCache {
 		if(!empty($attributeList)) {
 			foreach($attributeList as $reflectionAttribute) {
 				$bindKey = $this->getBindKey($reflectionAttribute);
-				$attributeCache[$bindKey] = fn(object $object, bool $preserveTypes = false):mixed
-					=> $this->nullableStringOrIterable($object, $propertyName, $preserveTypes);
+				$attributeCache[$bindKey] = fn(object $object):mixed
+					=> $this->readBindableValue($object, $propertyName);
 				$this->cacheNestedClassName(
 					$objectKeys,
 					$bindKey,
@@ -160,9 +159,9 @@ class BindableCache {
 			return;
 		}
 
-		$attributeCache[$propertyName] = fn(object $object, bool $preserveTypes = false):mixed
+		$attributeCache[$propertyName] = fn(object $object):mixed
 			=> isset($object->$propertyName)
-				? $this->nullableStringOrIterable($object, $propertyName, $preserveTypes)
+				? $this->readBindableValue($object, $propertyName)
 				: null;
 		$this->cacheNestedClassName(
 			$objectKeys,
@@ -251,39 +250,48 @@ class BindableCache {
 	/**
 	 * @param object|array<string, mixed> $object
 	 * @return array<string, mixed>
-	 * @param bool $preserveTypes Retain original values alongside ordinary object binding values.
 	 */
-	public function convertToKvp(object|array $object, bool $preserveTypes = false):array {
+	public function convertToKvp(object|array $object):array {
 		if(is_array($object)) {
 			return $object;
 		}
 
 		if($object instanceof stdClass) {
-			$values = get_object_vars($object);
-			return $preserveTypes
-				? array_map(fn(mixed $value):mixed => $this->preserveValue($value), $values)
-				: $this->stringifyMap($values);
+			return $this->stringifyMap(get_object_vars($object));
+		}
+
+		return array_map(
+			fn(mixed $value):mixed => $value instanceof BindableValue ? $value->getBindingValue() : $value,
+			$this->convertToBindableValues($object),
+		);
+	}
+
+	/**
+	 * Retain original values alongside their ordinary binding representation.
+	 * @param object|array<string, mixed> $object
+	 * @return array<string, mixed>
+	 */
+	public function convertToBindableValues(object|array $object):array {
+		if(is_array($object)) {
+			return $object;
+		}
+
+		if($object instanceof stdClass) {
+			return array_map($this->preserveValue(...), get_object_vars($object));
 		}
 
 		if(!$this->isBindable($object)) {
 			return [];
 		}
 
-		return $this->convertBindableObjectToKvp($object, $preserveTypes);
-	}
-
-	/** @return array<string, mixed> */
-	private function convertBindableObjectToKvp(object $object, bool $preserveTypes):array {
-		$kvp = [];
+		$values = [];
 		foreach($this->bindableClassMap[$object::class] as $key => $valueGetter) {
 			$targetObject = $this->resolveTargetObject($object, $key);
-			$value = $targetObject
-				? $valueGetter($targetObject, $preserveTypes)
-				: null;
-			$kvp[$key] = $preserveTypes ? $this->preserveValue($value) : $this->normalizeValue($value);
+			$value = $targetObject ? $valueGetter($targetObject) : null;
+			$values[$key] = $this->preserveValue($value);
 		}
 
-		return $kvp;
+		return $values;
 	}
 
 	private function preserveValue(mixed $value):mixed {
@@ -400,31 +408,13 @@ class BindableCache {
 		return strcasecmp($reflectionAttribute->getName(), $className) === 0;
 	}
 
-	private function nullableStringOrIterable(
-		object $object,
-		string $keyOrMethod,
-		bool $preserveTypes = false,
-	):mixed {
+	private function readBindableValue(object $object, string $keyOrMethod):mixed {
 		if(method_exists($object, $keyOrMethod)) {
-			$value = $object->$keyOrMethod();
-		}
-		elseif(property_exists($object, $keyOrMethod)) {
-			$value = $object->$keyOrMethod;
-		}
-		else {
-			return null;
+			return $object->$keyOrMethod();
 		}
 
-		if($preserveTypes || is_scalar($value)) {
-			return $value;
-		}
-		elseif(is_iterable($value)) {
-			return $value;
-		}
-		elseif(is_object($value)) {
-			if($value instanceof Stringable || method_exists($value, "__toString")) {
-				return (string)$value;
-			}
+		if(property_exists($object, $keyOrMethod)) {
+			return $object->$keyOrMethod;
 		}
 
 		return null;

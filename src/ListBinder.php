@@ -145,7 +145,7 @@ class ListBinder {
 	):int {
 		$this->elementBinder->bind(null, $listKey, $template);
 		$this->bindListData($listValue, $template);
-		foreach($this->bindableCache->convertToKvp($listValue, preserveTypes: true) as $key => $value) {
+		foreach($this->bindableCache->convertToBindableValues($listValue) as $key => $value) {
 			$this->elementBinder->bind($key, $value, $template);
 		}
 
@@ -158,7 +158,7 @@ class ListBinder {
 		}
 
 		if(is_object($listValue) && $this->bindableCache->isBindable($listValue)) {
-			return $this->bindableCache->convertToKvp($listValue, preserveTypes: true);
+			return $this->bindableCache->convertToBindableValues($listValue);
 		}
 
 		return $listValue;

@@ -266,12 +266,12 @@ class BindableCacheTest extends TestCase {
 		);
 	}
 
-	public function testNullableStringOrIterable_missingMemberReturnsNull():void {
+	public function testReadBindableValue_missingMemberReturnsNull():void {
 		$sut = new BindableCache();
 		$object = new class {};
 
 		self::assertNull(
-			$this->invokeBindableCacheMethod($sut, "nullableStringOrIterable", $object, "missing"),
+			$this->invokeBindableCacheMethod($sut, "readBindableValue", $object, "missing"),
 		);
 	}
 

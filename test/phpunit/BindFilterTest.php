@@ -8,22 +8,22 @@ use Countable;
 use stdClass;
 
 class BindFilterTest extends TestCase {
-	public function testDependenciesAreOptionalAndMatchInterfaces():void {
-		$filter = new class extends BindFilter {};
-		self::assertNull($filter->getDependency(Countable::class));
+	public function testGetDependency_optionalAndMatchesInterfaces():void {
+		$sut = new class extends BindFilter {};
+		self::assertNull($sut->getDependency(Countable::class));
 		$first = new ArrayObject([1]);
-		$filter->setDependency($first);
-		self::assertSame($first, $filter->getDependency(Countable::class));
-		self::assertSame($first, $filter->getDependency(ArrayObject::class));
-		self::assertNull($filter->getDependency(stdClass::class));
+		$sut->setDependency($first);
+		self::assertSame($first, $sut->getDependency(Countable::class));
+		self::assertSame($first, $sut->getDependency(ArrayObject::class));
+		self::assertNull($sut->getDependency(stdClass::class));
 
 		$second = new ArrayObject([1, 2]);
-		$filter->setDependency($second);
-		self::assertSame($second, $filter->getDependency(Countable::class));
+		$sut->setDependency($second);
+		self::assertSame($second, $sut->getDependency(Countable::class));
 	}
 
-	public function testOnlyPublicInstanceFilterMethodsAreExposed():void {
-		$filter = new class extends BindFilter {
+	public function testGetFilter_exposesPublicInstanceMethods():void {
+		$sut = new class extends BindFilter {
 			public function filterUpper(string $value):string {
 				return strtoupper($value);
 			}
@@ -37,9 +37,9 @@ class BindFilterTest extends TestCase {
 				return $value;
 			}
 		};
-		self::assertSame("HELLO", $filter->getFilter("upper")("hello"));
+		self::assertSame("HELLO", $sut->getFilter("upper")("hello"));
 		foreach(["hidden", "static", "helper", "setDependency", "getDependency", "missing"] as $name) {
-			self::assertNull($filter->getFilter($name));
+			self::assertNull($sut->getFilter($name));
 		}
 	}
 }
