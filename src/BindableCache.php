@@ -10,7 +10,6 @@ use ReflectionObject;
 use ReflectionProperty as RefProperty;
 use ReflectionProperty;
 use stdClass;
-use Stringable;
 
 class BindableCache {
 	/**
@@ -119,8 +118,8 @@ class BindableCache {
 		$methodName = $reflectionMethod->getName();
 		foreach($this->getBindAttributes($reflectionMethod) as $reflectionAttribute) {
 			$bindKey = $this->getBindKey($reflectionAttribute, $reflectionMethod);
-			$attributeCache[$bindKey] = fn(object $object):null|iterable|string
-				=> $this->nullableStringOrIterable($object, $methodName);
+			$attributeCache[$bindKey] = fn(object $object):mixed
+				=> $this->readBindableValue($object, $methodName);
 			$this->cacheNestedClassName(
 				$objectKeys,
 				$bindKey,
@@ -144,8 +143,8 @@ class BindableCache {
 		if(!empty($attributeList)) {
 			foreach($attributeList as $reflectionAttribute) {
 				$bindKey = $this->getBindKey($reflectionAttribute);
-				$attributeCache[$bindKey] = fn(object $object):null|iterable|string
-					=> $this->nullableStringOrIterable($object, $propertyName);
+				$attributeCache[$bindKey] = fn(object $object):mixed
+					=> $this->readBindableValue($object, $propertyName);
 				$this->cacheNestedClassName(
 					$objectKeys,
 					$bindKey,
@@ -160,9 +159,9 @@ class BindableCache {
 			return;
 		}
 
-		$attributeCache[$propertyName] = fn(object $object):null|iterable|string
+		$attributeCache[$propertyName] = fn(object $object):mixed
 			=> isset($object->$propertyName)
-				? $this->nullableStringOrIterable($object, $propertyName)
+				? $this->readBindableValue($object, $propertyName)
 				: null;
 		$this->cacheNestedClassName(
 			$objectKeys,
@@ -249,8 +248,8 @@ class BindableCache {
 	}
 
 	/**
-	 * @param object|array<string, string> $object
-	 * @return array<string, string>
+	 * @param object|array<string, mixed> $object
+	 * @return array<string, mixed>
 	 */
 	public function convertToKvp(object|array $object):array {
 		if(is_array($object)) {
@@ -261,25 +260,42 @@ class BindableCache {
 			return $this->stringifyMap(get_object_vars($object));
 		}
 
+		return array_map(
+			fn(mixed $value):mixed => $value instanceof BindableValue ? $value->getBindingValue() : $value,
+			$this->convertToBindableValues($object),
+		);
+	}
+
+	/**
+	 * Retain original values alongside their ordinary binding representation.
+	 * @param object|array<string, mixed> $object
+	 * @return array<string, mixed>
+	 */
+	public function convertToBindableValues(object|array $object):array {
+		if(is_array($object)) {
+			return $object;
+		}
+
+		if($object instanceof stdClass) {
+			return array_map($this->preserveValue(...), get_object_vars($object));
+		}
+
 		if(!$this->isBindable($object)) {
 			return [];
 		}
 
-		return $this->convertBindableObjectToKvp($object);
-	}
-
-	/** @return array<string, null|string|array<int|string, mixed>> */
-	private function convertBindableObjectToKvp(object $object):array {
-		$kvp = [];
+		$values = [];
 		foreach($this->bindableClassMap[$object::class] as $key => $valueGetter) {
 			$targetObject = $this->resolveTargetObject($object, $key);
-			$value = $targetObject
-				? $valueGetter($targetObject)
-				: null;
-			$kvp[$key] = $this->normalizeValue($value);
+			$value = $targetObject ? $valueGetter($targetObject) : null;
+			$values[$key] = $this->preserveValue($value);
 		}
 
-		return $kvp;
+		return $values;
+	}
+
+	private function preserveValue(mixed $value):mixed {
+		return is_iterable($value) ? $value : new BindableValue($value);
 	}
 
 	private function resolveTargetObject(object $object, string $key):?object {
@@ -392,31 +408,13 @@ class BindableCache {
 		return strcasecmp($reflectionAttribute->getName(), $className) === 0;
 	}
 
-	/** @return null|string|array<int|string, mixed> */
-	private function nullableStringOrIterable(
-		object $object,
-		string $keyOrMethod,
-	):null|iterable|string {
+	private function readBindableValue(object $object, string $keyOrMethod):mixed {
 		if(method_exists($object, $keyOrMethod)) {
-			$value = $object->$keyOrMethod();
-		}
-		elseif(property_exists($object, $keyOrMethod)) {
-			$value = $object->$keyOrMethod;
-		}
-		else {
-			return null;
+			return $object->$keyOrMethod();
 		}
 
-		if(is_scalar($value)) {
-			return $value;
-		}
-		elseif(is_iterable($value)) {
-			return $value;
-		}
-		elseif(is_object($value)) {
-			if($value instanceof Stringable || method_exists($value, "__toString")) {
-				return (string)$value;
-			}
+		if(property_exists($object, $keyOrMethod)) {
+			return $object->$keyOrMethod;
 		}
 
 		return null;

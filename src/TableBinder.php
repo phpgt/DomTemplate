@@ -290,7 +290,7 @@ class TableBinder {
 		int $headerIndex,
 		string $cellType,
 	):Element {
-		if($headerIndex < $tableRow->cells->length - 1) {
+		if($headerIndex < $tableRow->cells->length) {
 			return $tableRow->cells[$headerIndex];
 		}
 
