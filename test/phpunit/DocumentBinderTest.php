@@ -2261,10 +2261,10 @@ PHP);
 			. '<p id="raw" data-bind:text="amount"></p>');
 		$sut = $this->createFilterBinder($document);
 		$sut->registerBindFilter(new class extends BindFilter {
-			public function filterNumericOutput(float $value):string {
+			public function numericOutput(float $value):string {
 				return number_format($value, 2);
 			}
-			public function filterCurrency(string $value):string {
+			public function currency(string $value):string {
 				return "£" . $value;
 			}
 		});
@@ -2280,15 +2280,15 @@ PHP);
 			. '<b data-bind:text="amount|number"></b>');
 		$sut = $this->createFilterBinder($document);
 		$sut->registerBindFilter(new class extends BindFilter {
-			public function filterNumber(int $value):string {
+			public function number(int $value):string {
 				return number_format($value, 2);
 			}
-			public function filterCurrency(string $value):string {
+			public function currency(string $value):string {
 				return "£" . $value;
 			}
 		});
 		$application = new class extends BindFilter {
-			public function filterCurrency(string $value):string {
+			public function currency(string $value):string {
 				return ($this->getDependency(stdClass::class)?->symbol ?? "€") . $value;
 			}
 		};
@@ -2305,13 +2305,13 @@ PHP);
 		$sut = $this->createFilterBinder($document);
 		$first = new class extends BindFilter {
 			public string $prefix = "first ";
-			public function filterLabel(string $value):string {
+			public function label(string $value):string {
 				return $this->prefix . $value;
 			}
 		};
 		$sut->registerBindFilter($first);
 		$sut->registerBindFilter(new class extends BindFilter {
-			public function filterLabel(string $value):string {
+			public function label(string $value):string {
 				return "second " . $value;
 			}
 		});
@@ -2328,7 +2328,7 @@ PHP);
 		$document = new HTMLDocument('<p data-bind:text="date|date"></p>');
 		$sut = $this->createFilterBinder($document);
 		$sut->registerBindFilter(new class extends BindFilter {
-			public function filterDate(DateTimeInterface $value):string {
+			public function date(DateTimeInterface $value):string {
 				return $value->format("Y-m-d");
 			}
 		});
@@ -2351,10 +2351,10 @@ PHP);
 			. '<span data-bind:text="date|date"></span><b data-bind:text="amount|type"></b></li></ul>');
 		$sut = $this->createFilterBinder($document);
 		$sut->registerBindFilter(new class extends BindFilter {
-			public function filterDate(DateTimeInterface $value):string {
+			public function date(DateTimeInterface $value):string {
 				return $value->format("Y-m-d");
 			}
-			public function filterType(mixed $value):string {
+			public function type(mixed $value):string {
 				return get_debug_type($value);
 			}
 		});
@@ -2371,10 +2371,10 @@ PHP);
 			. '<p id="raw" data-bind:text="value">Original</p>');
 		$sut = $this->createFilterBinder($document);
 		$sut->registerBindFilter(new class extends BindFilter {
-			public function filterFallback(mixed $value):string {
+			public function fallback(mixed $value):string {
 				return $value ?? "Default";
 			}
-			public function filterIgnore(mixed $value):mixed {
+			public function ignore(mixed $value):mixed {
 				return null;
 			}
 		});
@@ -2391,10 +2391,10 @@ PHP);
 			. '<button name="status" data-bind:disabled="?@name|lower=blocked" data-rebind></button>');
 		$sut = $this->createFilterBinder($document);
 		$sut->registerBindFilter(new class extends BindFilter {
-			public function filterPositive(int $value):bool {
+			public function positive(int $value):bool {
 				return $value > 0;
 			}
-			public function filterLower(string $value):string {
+			public function lower(string $value):string {
 				return strtolower($value);
 			}
 		});
@@ -2416,7 +2416,7 @@ PHP);
 		$document = new HTMLDocument('<div data-bind:class=":one|positive first; :two|positive second"></div>');
 		$sut = $this->createFilterBinder($document);
 		$sut->registerBindFilter(new class extends BindFilter {
-			public function filterPositive(int $value):bool {
+			public function positive(int $value):bool {
 				return $value > 0;
 			}
 		});
@@ -2438,7 +2438,7 @@ PHP);
 		$component->setComponentBinderDependencies($document->querySelector("section"));
 		$filter = new class extends BindFilter {
 			public int $calls = 0;
-			public function filterLabel(string $value):string {
+			public function label(string $value):string {
 				$this->calls++;
 				return ($this->getDependency(stdClass::class)?->prefix ?? "") . $value;
 			}
@@ -2459,7 +2459,7 @@ PHP);
 		$document = new HTMLDocument('<p data-bind:text="|upper"></p><span>{{}}</span>');
 		$sut = $this->createFilterBinder($document);
 		$sut->registerBindFilter(new class extends BindFilter {
-			public function filterUpper(string $value):string {
+			public function upper(string $value):string {
 				return strtoupper($value);
 			}
 		});
@@ -2511,10 +2511,10 @@ PHP);
 			. '<li data-list data-bind:text="name|upper"></li></ul></div>');
 		$sut = $this->createFilterBinder($document);
 		$sut->registerBindFilter(new class extends BindFilter {
-			public function filterReverse(array $value):array {
+			public function reverse(array $value):array {
 				return array_reverse($value);
 			}
-			public function filterUpper(string $value):string {
+			public function upper(string $value):string {
 				return strtoupper($value);
 			}
 		});
@@ -2533,7 +2533,7 @@ PHP);
 		$document = new HTMLDocument('<p data-bind:text="value|label"></p>');
 		$sut = $this->createFilterBinder($document);
 		$sut->registerBindFilter(new class extends BindFilter {
-			public function filterLabel(object $value):string {
+			public function label(object $value):string {
 				return $value->label;
 			}
 		});
@@ -2563,7 +2563,7 @@ PHP);
 			. '<span>{{amount}}</span></li></ul>');
 		$sut = $this->createFilterBinder($document);
 		$sut->registerBindFilter(new class extends BindFilter {
-			public function filterType(mixed $value):string {
+			public function type(mixed $value):string {
 				return get_debug_type($value);
 			}
 		});
@@ -2578,7 +2578,7 @@ PHP);
 		$firstDocument = new HTMLDocument('<p data-bind:text="name|upper"></p>');
 		$otherBinder = $this->createFilterBinder($firstDocument);
 		$otherBinder->registerBindFilter(new class extends BindFilter {
-			public function filterUpper(string $value):string {
+			public function upper(string $value):string {
 				return strtoupper($value);
 			}
 		});
@@ -2593,7 +2593,7 @@ PHP);
 		$failure = new RuntimeException("Filter failed");
 		$sut->registerBindFilter(new class($failure) extends BindFilter {
 			public function __construct(private RuntimeException $failure) {}
-			public function filterBroken(mixed $value):mixed {
+			public function broken(mixed $value):mixed {
 				throw $this->failure;
 			}
 		});
@@ -2614,7 +2614,7 @@ PHP);
 			. '<section id="hidden" data-element="!visible"><span data-bind:text="label|upper"></span></section>');
 		$sut = $this->createFilterBinder($document);
 		$sut->registerBindFilter(new class extends BindFilter {
-			public function filterUpper(string $value):string {
+			public function upper(string $value):string {
 				return strtoupper($value);
 			}
 		});
@@ -2642,7 +2642,7 @@ PHP);
 		$document = new HTMLDocument('<ul><li data-list data-bind:text="|upper"></li></ul>');
 		$sut = $this->createFilterBinder($document);
 		$sut->registerBindFilter(new class extends BindFilter {
-			public function filterUpper(string $value):string {
+			public function upper(string $value):string {
 				return strtoupper($value);
 			}
 		});
@@ -2667,15 +2667,15 @@ PHP);
 			. '</tr></tbody></table>');
 		$sut = $this->createFilterBinder($document);
 		$sut->registerBindFilter(new class extends BindFilter {
-			public function filterUpper(string $value):string {
+			public function upper(string $value):string {
 				return strtoupper($value);
 			}
-			public function filterDecimal(float $value):string {
+			public function decimal(float $value):string {
 				return number_format($value, 2);
 			}
 		});
 		$applicationFilters = new class extends BindFilter {
-			public function filterCurrency(string $value):string {
+			public function currency(string $value):string {
 				return $this->getDependency(stdClass::class)->symbol . $value;
 			}
 		};

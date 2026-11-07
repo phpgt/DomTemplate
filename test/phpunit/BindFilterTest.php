@@ -24,13 +24,13 @@ class BindFilterTest extends TestCase {
 
 	public function testGetFilter_exposesPublicInstanceMethods():void {
 		$sut = new class extends BindFilter {
-			public function filterUpper(string $value):string {
+			public function upper(string $value):string {
 				return strtoupper($value);
 			}
-			protected function filterHidden(string $value):string {
+			protected function hidden(string $value):string {
 				return $value;
 			}
-			public static function filterStatic(string $value):string {
+			public static function static(string $value):string {
 				return $value;
 			}
 			public function helper(string $value):string {
@@ -38,7 +38,8 @@ class BindFilterTest extends TestCase {
 			}
 		};
 		self::assertSame("HELLO", $sut->getFilter("upper")("hello"));
-		foreach(["hidden", "static", "helper", "setDependency", "getDependency", "missing"] as $name) {
+		self::assertSame("hello", $sut->getFilter("helper")("hello"));
+		foreach(["hidden", "static", "setDependency", "getDependency", "getFilter", "missing"] as $name) {
 			self::assertNull($sut->getFilter($name));
 		}
 	}

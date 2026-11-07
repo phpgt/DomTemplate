@@ -29,12 +29,11 @@ abstract class BindFilter {
 	}
 
 	public function getFilter(string $name):?Closure {
-		$methodName = "filter" . ucfirst($name);
-		if(!method_exists($this, $methodName)) {
+		if(method_exists(self::class, $name) || !method_exists($this, $name)) {
 			return null;
 		}
 
-		$method = new ReflectionMethod($this, $methodName);
+		$method = new ReflectionMethod($this, $name);
 		if(!$method->isPublic() || $method->isStatic()) {
 			return null;
 		}
