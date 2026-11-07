@@ -50,8 +50,13 @@ class HTMLAttributeBinder {
 			}
 
 			$bindProperty = $this->getBindProperty($element, $attributeName);
+			$attributeValue = $attribute->value;
+			if(strtolower($bindProperty) === "class") {
+				// A new modifier starts another class binding expression.
+				$attributeValue = preg_replace('/\s+(?=!?[:?])/', '; ', $attributeValue) ?? $attributeValue;
+			}
 			[$modifier, $remainingExpressions, $expression] = $this->resolveModifier(
-				$key, $attribute->value,
+				$key, $attributeValue,
 			);
 			if($modifier === false) {
 				continue;

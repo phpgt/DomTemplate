@@ -523,6 +523,63 @@ PHP);
 		self::assertSame("secondary", $img->className);
 	}
 
+	public function testBindKeyValue_multipleClassToggles():void {
+		$document = new HTMLDocument('<span class="existing" data-bind:class=":overweight :oversize">0,000</span>');
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+		$span = $document->querySelector("span");
+
+		$sut->bindKeyValue("overweight", true);
+		self::assertTrue($span->classList->contains("overweight"));
+		self::assertFalse($span->classList->contains("oversize"));
+		self::assertSame(":oversize", $span->getAttribute("data-bind:class"));
+
+		$sut->bindKeyValue("oversize", true);
+		self::assertTrue($span->classList->contains("overweight"));
+		self::assertTrue($span->classList->contains("oversize"));
+		self::assertTrue($span->classList->contains("existing"));
+		self::assertFalse($span->hasAttribute("data-bind:class"));
+	}
+
+	public function testBindKeyValue_multipleClassToggles_rebind():void {
+		$document = new HTMLDocument('<span data-bind:class=":overweight :oversize" data-rebind></span>');
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+		$span = $document->querySelector("span");
+
+		$sut->bindKeyValue("oversize", true);
+		$sut->bindKeyValue("overweight", true);
+		self::assertTrue($span->classList->contains("overweight"));
+		self::assertTrue($span->classList->contains("oversize"));
+
+		$sut->bindKeyValue("overweight", false);
+		self::assertFalse($span->classList->contains("overweight"));
+		self::assertTrue($span->classList->contains("oversize"));
+		$sut->bindKeyValue("oversize", false);
+		self::assertSame("", $span->className);
+		self::assertSame(":overweight :oversize", $span->getAttribute("data-bind:class"));
+	}
+
+	public function testBindKeyValue_multipleClassBindings_mixedModifiers():void {
+		$document = new HTMLDocument('<span data-bind:class="?isAdmin :featured !?loggedIn"></span>');
+		$sut = new DocumentBinder($document);
+		$sut->setDependencies(...$this->documentBinderDependencies($document));
+		$span = $document->querySelector("span");
+
+		$sut->bindKeyValue("isAdmin", "admin");
+		self::assertSame("admin", $span->className);
+		self::assertSame(":featured; !?loggedIn", $span->getAttribute("data-bind:class"));
+
+		$sut->bindKeyValue("featured", true);
+		self::assertTrue($span->classList->contains("admin"));
+		self::assertTrue($span->classList->contains("featured"));
+		self::assertSame("!?loggedIn", $span->getAttribute("data-bind:class"));
+
+		$sut->bindKeyValue("loggedIn", true);
+		self::assertFalse($span->hasAttribute("class"));
+		self::assertFalse($span->hasAttribute("data-bind:class"));
+	}
+
 	public function testBindKeyValue_classToggle_differentClassNameToBindKey():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_DIFFERENT_BIND_PROPERTIES);
 		$sut = new DocumentBinder($document);
@@ -2384,6 +2441,27 @@ PHP);
 		self::assertSame("Original", $document->querySelector("#ignored")->textContent);
 		self::assertTrue($document->querySelector("#ignored")->hasAttribute("data-bind:text"));
 		self::assertSame("Original", $document->querySelector("#raw")->textContent);
+	}
+
+	public function testBindKeyValue_multipleClassBindingsWithFilters():void {
+		$document = new HTMLDocument('<p data-bind:class=":isAdmin|positive !:loggedIn|positive"></p>');
+		$sut = $this->createFilterBinder($document);
+		$sut->registerBindFilter(new class extends BindFilter {
+			public function positive(int $value):bool {
+				return $value > 0;
+			}
+		});
+
+		$sut->bindKeyValue("loggedIn", 0);
+		$element = $document->querySelector("p");
+		self::assertTrue($element->classList->contains("loggedIn"));
+		self::assertFalse($element->classList->contains("isAdmin"));
+		self::assertSame(":isAdmin|positive", $element->getAttribute("data-bind:class"));
+
+		$sut->bindKeyValue("isAdmin", 1);
+		self::assertTrue($element->classList->contains("isAdmin"));
+		self::assertTrue($element->classList->contains("loggedIn"));
+		self::assertFalse($element->hasAttribute("data-bind:class"));
 	}
 
 	public function testBindKeyValue_filtersWithModifiersAndRebinding():void {
