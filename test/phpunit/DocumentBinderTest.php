@@ -2607,6 +2607,93 @@ PHP);
 		}
 	}
 
+	#[DataProvider("filteredOptionalElementStates")]
+	public function testBindData_filtersWithinOptionalElements(?bool $visible, ?string $expectedId):void {
+		$document = new HTMLDocument('<section id="visible" data-element="visible">'
+			. '<span data-bind:text="label|upper"></span></section>'
+			. '<section id="hidden" data-element="!visible"><span data-bind:text="label|upper"></span></section>');
+		$sut = $this->createFilterBinder($document);
+		$sut->registerBindFilter(new class extends BindFilter {
+			public function filterUpper(string $value):string {
+				return strtoupper($value);
+			}
+		});
+
+		$sut->bindData((object)["visible" => $visible, "label" => "hello"]);
+		$sut->cleanupDocument();
+
+		if($expectedId === null) {
+			self::assertCount(0, $document->querySelectorAll("section"));
+			return;
+		}
+
+		self::assertCount(1, $document->querySelectorAll("section"));
+		self::assertSame($expectedId, $document->querySelector("section")->id);
+		self::assertSame("HELLO", $document->querySelector("section span")->textContent);
+	}
+
+	public static function filteredOptionalElementStates():iterable {
+		yield "visible" => [true, "visible"];
+		yield "inverse" => [false, "hidden"];
+		yield "not supplied" => [null, null];
+	}
+
+	public function testBindListCallback_filtersTheReturnedScalarValue():void {
+		$document = new HTMLDocument('<ul><li data-list data-bind:text="|upper"></li></ul>');
+		$sut = $this->createFilterBinder($document);
+		$sut->registerBindFilter(new class extends BindFilter {
+			public function filterUpper(string $value):string {
+				return strtoupper($value);
+			}
+		});
+		$seen = [];
+
+		$count = $sut->bindListCallback(["first", "second"], function(Element $element, string $value, int $key)use(&$seen):string {
+			$seen[] = [$key, $value];
+			return "item $key: $value";
+		});
+		$sut->cleanupDocument();
+
+		self::assertSame(2, $count);
+		self::assertSame([[0, "first"], [1, "second"]], $seen);
+		self::assertSame("ITEM 0: FIRST", $document->querySelectorAll("li")[0]->textContent);
+		self::assertSame("ITEM 1: SECOND", $document->querySelectorAll("li")[1]->textContent);
+	}
+
+	public function testBindTable_chainsFiltersFromSharedProvidersInRowTemplates():void {
+		$document = new HTMLDocument('<table><thead><tr><th data-table-key="name">Customer</th>'
+			. '<th data-table-key="amount">Total</th></tr></thead><tbody><tr data-list>'
+			. '<td data-bind:text="name|upper"></td><td data-bind:text="amount|decimal|currency"></td>'
+			. '</tr></tbody></table>');
+		$sut = $this->createFilterBinder($document);
+		$sut->registerBindFilter(new class extends BindFilter {
+			public function filterUpper(string $value):string {
+				return strtoupper($value);
+			}
+			public function filterDecimal(float $value):string {
+				return number_format($value, 2);
+			}
+		});
+		$applicationFilters = new class extends BindFilter {
+			public function filterCurrency(string $value):string {
+				return $this->getDependency(stdClass::class)->symbol . $value;
+			}
+		};
+		$applicationFilters->setDependency((object)["symbol" => "€"]);
+		$sut->registerBindFilter($applicationFilters);
+
+		$sut->bindTable([["name" => "Ada", "amount" => 12345.5], ["name" => "Grace", "amount" => 25]]);
+		$sut->cleanupDocument();
+
+		$rows = $document->querySelectorAll("tbody tr");
+		self::assertCount(2, $rows);
+		self::assertCount(2, $rows[0]->cells);
+		self::assertSame("ADA", $rows[0]->cells[0]->textContent);
+		self::assertSame("€12,345.50", $rows[0]->cells[1]->textContent);
+		self::assertSame("GRACE", $rows[1]->cells[0]->textContent);
+		self::assertSame("€25.00", $rows[1]->cells[1]->textContent);
+	}
+
 	private function createFilterBinder(HTMLDocument $document):DocumentBinder {
 		$binder = new DocumentBinder($document);
 		$binder->setDependencies(...$this->documentBinderDependencies($document));
