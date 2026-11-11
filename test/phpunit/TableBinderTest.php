@@ -5,6 +5,8 @@ use ArrayIterator;
 use IteratorAggregate;
 use GT\Dom\HTMLDocument;
 use GT\DomTemplate\BindableCache;
+use GT\DomTemplate\BindFilter;
+use RuntimeException;
 use GT\DomTemplate\ElementBinder;
 use GT\DomTemplate\HTMLAttributeBinder;
 use GT\DomTemplate\HTMLAttributeCollection;
@@ -866,6 +868,106 @@ HTML);
 		]);
 
 		self::assertSame(0, $index);
+	}
+
+	public function testBindTableData_headerOnlyDoesNotResolveRowsOrChangeExistingBody():void {
+		$document = new HTMLDocument('<table><tbody><tr><td>Existing</td></tr></tbody></table>');
+		$dependencies = $this->tablebinderDependencies($document);
+		$templates = $this->createMock(ListElementCollection::class);
+		$templates->expects(self::never())->method("get");
+		$dependencies[1] = $templates;
+		$sut = new TableBinder();
+		$sut->setDependencies(...$dependencies);
+		$tableBody = $document->querySelector("tbody");
+		$existingRow = $tableBody->rows[0];
+
+		$sut->bindTableData([["Name"]], $document);
+
+		self::assertSame("Name", $document->querySelector("thead")->textContent);
+		self::assertCount(1, $tableBody->rows);
+		self::assertSame($existingRow, $tableBody->rows[0]);
+		self::assertSame("Existing", $existingRow->textContent);
+	}
+
+	public function testBindTableData_resolvesTemplateOnceForTheWholeBatch():void {
+		$document = new HTMLDocument('<table><thead><tr><th>Name</th></tr></thead>'
+			. '<tbody><tr data-list class="person"><td data-bind:text="Name"></td></tr></tbody></table>');
+		$dependencies = $this->tablebinderDependencies($document);
+		$tableBody = $document->querySelector("tbody");
+		$template = $dependencies[1]->get($tableBody);
+		$templates = $this->createMock(ListElementCollection::class);
+		$templates->expects(self::once())->method("get")->with($tableBody)->willReturn($template);
+		$dependencies[1] = $templates;
+		$sut = new TableBinder();
+		$sut->setDependencies(...$dependencies);
+
+		$sut->bindTableData([["Name"], ["Alice"], ["Bob"], ["Charlie"]], $document);
+
+		self::assertCount(3, $tableBody->rows);
+		self::assertSame(["Alice", "Bob", "Charlie"], array_map(
+			fn($row) => $row->textContent,
+			iterator_to_array($tableBody->rows),
+		));
+		self::assertCount(3, $tableBody->querySelectorAll("tr.person"));
+	}
+
+	public function testBindTableData_publishesFilteredRowsOnlyAfterTheWholeBatch():void {
+		$document = new HTMLDocument('<table><thead><tr><th>Name</th></tr></thead>'
+			. '<tbody><tr id="existing"><td>Existing</td></tr>'
+			. '<tr data-list><td data-bind:text="Name|upper"></td></tr></tbody></table>');
+		$dependencies = $this->tablebinderDependencies($document);
+		$filter = new class($document) extends BindFilter {
+			public array $visibleRows = [];
+			public function __construct(private readonly HTMLDocument $document) {}
+			public function upper(string $value):string {
+				$this->visibleRows[] = $this->document->querySelector("tbody")->rows->length;
+				return strtoupper($value);
+			}
+		};
+		$dependencies[3]->registerBindFilter($filter);
+		$sut = new TableBinder();
+		$sut->setDependencies(...$dependencies);
+
+		$sut->bindTableData([["Name"], ["Alice"], ["Bob"]], $document);
+		self::assertSame([1, 1], $filter->visibleRows);
+		$tableBody = $document->querySelector("tbody");
+		self::assertSame("existing", $tableBody->rows[0]->id);
+		self::assertSame("ALICE", $tableBody->rows[1]->textContent);
+		self::assertSame("BOB", $tableBody->rows[2]->textContent);
+
+		$sut->bindTableData([["Name"], ["Charlie"]], $document);
+		self::assertSame([1, 1, 3], $filter->visibleRows);
+		self::assertCount(4, $tableBody->rows);
+		self::assertSame("ALICE", $tableBody->rows[1]->textContent);
+		self::assertSame("CHARLIE", $tableBody->rows[3]->textContent);
+	}
+
+	public function testBindTableData_failedFilterDoesNotPublishPartialRows():void {
+		$document = new HTMLDocument('<table><thead><tr><th>Name</th></tr></thead>'
+			. '<tbody><tr data-list><td data-bind:text="Name|validate"></td></tr></tbody></table>');
+		$dependencies = $this->tablebinderDependencies($document);
+		$failure = new RuntimeException("Invalid name");
+		$dependencies[3]->registerBindFilter(new class($failure) extends BindFilter {
+			public function __construct(private readonly RuntimeException $failure) {}
+			public function validate(string $value):string {
+				if($value === "invalid") {
+					throw $this->failure;
+				}
+				return $value;
+			}
+		});
+		$sut = new TableBinder();
+		$sut->setDependencies(...$dependencies);
+
+		try {
+			$sut->bindTableData([["Name"], ["Alice"], ["invalid"]], $document);
+			self::fail("Expected the filter exception");
+		}
+		catch(RuntimeException $exception) {
+			self::assertSame($failure, $exception);
+		}
+
+		self::assertCount(0, $document->querySelector("tbody")->rows);
 	}
 
 	private function tablebinderDependencies(HTMLDocument $document):array {

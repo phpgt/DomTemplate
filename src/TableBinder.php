@@ -123,7 +123,12 @@ class TableBinder {
 	):void {
 		$allowedHeaders = $this->resolveAllowedHeaders($table, $headerRow);
 		$tableBody = $table->tBodies[0] ?? $table->createTBody();
+		if($tableData === []) {
+			return;
+		}
+
 		$rowFragment = $table->ownerDocument->createDocumentFragment();
+		$tableRowTemplate = $this->createTableRow($context, $tableBody);
 		$debugEnabled = false;
 		$currentElement = $tableBody;
 		while($currentElement) {
@@ -137,9 +142,8 @@ class TableBinder {
 
 		foreach($tableData as $rowData) {
 			$this->bindRowData(
-				$tableBody,
+				$tableRowTemplate,
 				$rowFragment,
-				$context,
 				$headerRow,
 				$allowedHeaders,
 				$debugEnabled,
@@ -158,16 +162,15 @@ class TableBinder {
 	 * @param TableRow|DoubleHeaderRow $rowData
 	 */
 	private function bindRowData(
-		Element $tableBody,
+		Element $tableRowTemplate,
 		\GT\Dom\DocumentFragment $rowFragment,
-		Element $context,
 		array $headerRow,
 		array $allowedHeaders,
 		bool $debugEnabled,
 		array $rowData,
 		array $tableData,
 	):void {
-		$tableRow = $this->createTableRow($context, $tableBody);
+		$tableRow = $tableRowTemplate->cloneNode(true);
 		$this->populateTableCells(
 			$tableRow,
 			$headerRow,
