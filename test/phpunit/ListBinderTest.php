@@ -32,6 +32,28 @@ use PHPUnit\Framework\TestCase;
 use Stringable;
 
 class ListBinderTest extends TestCase {
+	public function testBindListData_explicitListKey():void {
+		$document = new HTMLDocument('<ul><li data-list '
+			. 'data-bind:data-short="{{}}" data-bind:data-key="{{_key_}}">'
+			. '<a href="/items/{{_key_}}">{{_key_}}</a>'
+			. '<span data-bind:text="{{_key_}}"></span>'
+			. '<strong data-bind:text></strong></li></ul>');
+		$sut = new ListBinder();
+		$sut->setDependencies(...$this->listBinderDependencies($document));
+		$listData = ["first" => "One", 0 => "Zero"];
+		$sut->bindListData($listData, $document);
+
+		foreach($document->querySelectorAll("li") as $i => $item) {
+			$key = (string)array_keys($listData)[$i];
+			self::assertSame($key, $item->getAttribute("data-short"));
+			self::assertSame($key, $item->getAttribute("data-key"));
+			self::assertSame($key, $item->querySelector("span")->textContent);
+			self::assertSame($key, $item->querySelector("a")->textContent);
+			self::assertSame("/items/$key", $item->querySelector("a")->getAttribute("href"));
+			self::assertSame(array_values($listData)[$i], $item->querySelector("strong")->textContent);
+		}
+	}
+
 	public function testBindList_emptyList():void {
 		$document = new HTMLDocument(HTMLPageContent::HTML_LIST);
 
