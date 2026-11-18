@@ -112,6 +112,11 @@ echo $document;
 </ul>
 ```
 
+To bind each item's list key, use `data-bind:text="{{_key_}}"`.
+The shorter `data-bind:text="{{}}"` form works too. Use `{{_key_}}`
+within text or an attribute, such as `href="/items/{{_key_}}"`, to include
+the list key in a placeholder.
+
 ## Advanced usage: bind database results directly to the page
 
 In the following example, the `data-template` attribute is used to repeat the LI for every result in the dataset. This dataset represents data that would typically come from a database query or API, but for this example we're simply hard-coding the data.

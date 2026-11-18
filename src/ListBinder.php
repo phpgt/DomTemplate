@@ -10,6 +10,7 @@ use Stringable;
 
 class ListBinder {
 	public const LIST_KEY_BIND_KEY = "{{}}";
+	public const EXPLICIT_LIST_KEY_BIND_KEY = "{{_key_}}";
 
 	private ElementBinder $elementBinder;
 	private ListElementCollection $listElementCollection;
@@ -100,6 +101,8 @@ class ListBinder {
 		?callable $callback,
 	):int {
 		$this->elementBinder->bind(self::LIST_KEY_BIND_KEY, $listKey, $template);
+		$this->elementBinder->bind(self::EXPLICIT_LIST_KEY_BIND_KEY, $listKey, $template);
+		$this->elementBinder->bind("_key_", $listKey, $template);
 		$normalizedFromObject = $this->canNormalizeObject($listValue);
 		$listValue = $this->normalizeListValue($listValue);
 		if($callback) {
